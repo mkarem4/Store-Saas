@@ -9,6 +9,7 @@ use App\Filament\Business\Resources\Categories\Schemas\CategoryForm;
 use App\Filament\Business\Resources\Categories\Tables\CategoriesTable;
 use App\Models\Category;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -21,7 +22,7 @@ class CategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;
 
-    protected static ?string $navigationGroup = 'Catalog';
+    protected static string|UnitEnum|null $navigationGroup = 'Catalog';
 
     protected static ?int $navigationSort = 1;
 

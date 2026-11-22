@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Filament\Business\Resources\Products;
+namespace App\Filament\Business\Resources\Products\RelationManagers;
 
 use App\Enums\ProductUnit;
+use BackedEnum;
 use App\Filament\Forms\Components\MoneyInput;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -25,7 +26,7 @@ class VariantsRelationManager extends RelationManager
 {
     protected static string $relationship = 'variants';
 
-    protected static string | Heroicon | null $icon = Heroicon::OutlinedTag;
+    protected static string|BackedEnum|null $icon = Heroicon::OutlinedTag;
 
     protected static ?string $title = 'Variants';
 
