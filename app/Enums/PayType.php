@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum PayType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum PayType: string implements HasLabel
 {
     case Monthly = 'monthly';
     case Hourly = 'hourly';
@@ -13,5 +15,10 @@ enum PayType: string
             self::Monthly => __('Monthly salary'),
             self::Hourly => __('Hourly rate'),
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

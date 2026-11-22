@@ -2,61 +2,23 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\SetLocale;
-use App\Http\Middleware\SetPermissionTeam;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+use App\Filament\Staff\Pages\TimeClock;
+use App\Models\Business;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class StaffPanelProvider extends PanelProvider
 {
+    use ConfiguresPanel;
+
     public function panel(Panel $panel): Panel
     {
-        return $panel
-            ->id('staff')
-            ->path('staff')
-            ->login()
-            ->brandName('Store Staff')
-            ->colors([
-                'primary' => Color::Sky,
-            ])
-            ->sidebarCollapsibleOnDesktop()
-            ->discoverResources(in: app_path('Filament/Staff/Resources'), for: 'App\Filament\Staff\Resources')
-            ->discoverPages(in: app_path('Filament/Staff/Pages'), for: 'App\Filament\Staff\Pages')
-            ->pages([
-                Dashboard::class,
-            ])
-            ->discoverWidgets(in: app_path('Filament/Staff/Widgets'), for: 'App\Filament\Staff\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
-            ->middleware([
-                EncryptCookies::class,
-                AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                AuthenticateSession::class,
-                ShareErrorsFromSession::class,
-                PreventRequestForgery::class,
-                SubstituteBindings::class,
-                DisableBladeIconComponents::class,
-                DispatchServingFilamentEvent::class,
-                SetLocale::class,
-                SetPermissionTeam::class,
-            ])
-            ->authMiddleware([
-                Authenticate::class,
-            ]);
+        return $this->base($panel, 'staff')
+            ->brandName(fn (): string => filament()->getTenant()?->translatedName() ?? config('app.name'))
+            ->colors(['primary' => Color::Sky])
+            ->tenant(Business::class, slugAttribute: 'slug')
+            ->tenantMenu(false)
+            ->homeUrl(fn (): string => TimeClock::getUrl());
     }
 }

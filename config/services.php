@@ -35,6 +35,25 @@ return [
         ],
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_KEY'),
+    ],
+
+    'fcm' => [
+        // Firebase service-account JSON (path); push is logged only when unset.
+        'credentials' => env('FCM_CREDENTIALS'),
+        'project_id' => env('FCM_PROJECT_ID'),
+    ],
+
+    // Deep link the reset e-mail opens in the customer app.
+    'mobile' => [
+        'reset_password_url' => env('MOBILE_RESET_PASSWORD_URL', 'yulio://reset-password'),
+    ],
+
+    'gold_api' => [
+        'key' => env('GOLD_API_KEY'),
+    ],
+
     'stripe' => [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),

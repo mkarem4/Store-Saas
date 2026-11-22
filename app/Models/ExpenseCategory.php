@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToBusiness;
+use App\Models\Concerns\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ExpenseCategory extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $fillable = [
         'business_id',
@@ -29,5 +30,10 @@ class ExpenseCategory extends Model
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function translatedName(): string
+    {
+        return $this->translated('name');
     }
 }

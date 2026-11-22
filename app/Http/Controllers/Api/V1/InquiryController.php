@@ -12,9 +12,6 @@ use Illuminate\Http\Request;
 
 class InquiryController extends Controller
 {
-    /**
-     * @return JsonResponse
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

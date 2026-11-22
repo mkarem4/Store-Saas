@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum StockMovementType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum StockMovementType: string implements HasLabel
 {
     case Purchase = 'purchase';
     case Sale = 'sale';
@@ -23,5 +25,10 @@ enum StockMovementType: string
             self::Reservation => __('Reservation'),
             self::Release => __('Release'),
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

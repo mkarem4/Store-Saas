@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToBusiness;
+use App\Models\Concerns\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,7 @@ class Modifier extends Model
 {
     use BelongsToBusiness;
     use HasFactory;
+    use HasTranslations;
 
     protected $fillable = [
         'business_id',
@@ -32,5 +34,10 @@ class Modifier extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(ModifierGroup::class, 'modifier_group_id');
+    }
+
+    public function translatedName(): string
+    {
+        return $this->translated('name');
     }
 }

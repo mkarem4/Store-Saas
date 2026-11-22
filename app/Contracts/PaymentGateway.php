@@ -17,7 +17,16 @@ interface PaymentGateway
 
     public function void(Order $order): void;
 
-    public function refund(Order $order, int $amountCents): void;
+    /**
+     * Refund part or all of a captured payment. Returns the gateway refund id.
+     */
+    public function refund(Order $order, int $amountCents): ?string;
+
+    /**
+     * Actual processing fee charged by the gateway for the captured payment
+     * (D26: borne by the store). Null when not known yet.
+     */
+    public function feeFor(Order $order): ?int;
 
     public function isConfigured(): bool;
 }

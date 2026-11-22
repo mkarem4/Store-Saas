@@ -61,7 +61,7 @@ class BusinessProvisioner
 
             $this->createRoles($business, $owner);
 
-            foreach (['rent' => ['en' => 'Rent', 'ar' => 'إيجار'], 'salaries' => ['en' => 'Salaries', 'ar' => 'رواتب'], 'electricity' => ['en' => 'Electricity', 'ar' => 'كهرباء'], 'water' => ['en' => 'Water', 'ar' => 'مياه'], 'maintenance' => ['en' => 'Maintenance', 'ar' => 'صيانة'], 'marketing' => ['en' => 'Marketing', 'ar' => 'تسويق'], 'other' => ['en' => 'Other', 'ar' => 'أخرى']] as $key => $label) {
+            foreach (['rent' => ['en' => 'Rent', 'ar' => 'إيجار'], 'salaries' => ['en' => 'Salaries', 'ar' => 'رواتب'], 'electricity' => ['en' => 'Electricity', 'ar' => 'كهرباء'], 'water' => ['en' => 'Water', 'ar' => 'مياه'], 'maintenance' => ['en' => 'Maintenance', 'ar' => 'صيانة'], 'marketing' => ['en' => 'Marketing', 'ar' => 'تسويق'], 'other' => ['en' => 'Other', 'ar' => 'أخرى']] + SystemExpenseRecorder::CATEGORIES as $key => $label) {
                 ExpenseCategory::query()->firstOrCreate(
                     ['business_id' => $business->id, 'key' => $key],
                     ['name' => $label, 'is_system' => true],
@@ -79,6 +79,10 @@ class BusinessProvisioner
         $registrar->setPermissionsTeamId($business->id);
 
         try {
+            foreach (Permission::all() as $permission) {
+                \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+            }
+
             $ownerRole = Role::findOrCreate('business_owner', 'web');
             $ownerRole->syncPermissions(Permission::businessOwner());
 

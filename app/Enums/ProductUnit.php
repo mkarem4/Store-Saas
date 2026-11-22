@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum ProductUnit: string
+use Filament\Support\Contracts\HasLabel;
+
+enum ProductUnit: string implements HasLabel
 {
     case Piece = 'piece';
     case Carton = 'carton';
@@ -20,5 +22,10 @@ enum ProductUnit: string
     public function allowsDecimalQuantity(): bool
     {
         return $this === self::Kilogram;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

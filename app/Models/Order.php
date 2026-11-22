@@ -27,10 +27,16 @@ class Order extends Model
         'payment_status',
         'subtotal_cents',
         'delivery_fee_cents',
+        'delivery_distance_km',
+        'tax_rate',
         'discount_cents',
         'tax_cents',
         'total_cents',
         'cogs_cents',
+        'platform_fee_cents',
+        'gateway_fee_cents',
+        'store_payout_cents',
+        'refunded_cents',
         'payment_intent_id',
         'idempotency_key',
         'delivery_address',
@@ -42,6 +48,7 @@ class Order extends Model
         'expires_at',
         'accepted_at',
         'completed_at',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -55,6 +62,9 @@ class Order extends Model
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
             'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'delivery_distance_km' => 'float',
+            'tax_rate' => 'float',
         ];
     }
 
@@ -76,6 +86,20 @@ class Order extends Model
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    /**
+     * Product value the platform commission is charged on (G3 assumption):
+     * items after discount, excluding tax and delivery.
+     */
+    public function commissionableCents(): int
+    {
+        return max(0, (int) $this->subtotal_cents - (int) $this->discount_cents);
     }
 
     public function isPending(): bool

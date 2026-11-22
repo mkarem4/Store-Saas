@@ -35,8 +35,16 @@ class FakeGateway implements PaymentGateway
         //
     }
 
-    public function refund(Order $order, int $amountCents): void
+    public function refund(Order $order, int $amountCents): ?string
     {
-        //
+        return 're_fake_'.Str::lower(Str::random(24));
+    }
+
+    /**
+     * Mirrors Stripe's US card pricing (2.9% + 30¢) so wallet math is realistic.
+     */
+    public function feeFor(Order $order): ?int
+    {
+        return (int) round($order->total_cents * 0.029) + 30;
     }
 }

@@ -17,6 +17,8 @@ class Refund extends Model
         'sale_id',
         'order_id',
         'amount_cents',
+        'tax_cents',
+        'cogs_cents',
         'reason',
         'user_id',
         'refunded_at',

@@ -7,9 +7,9 @@ use App\Enums\FulfillmentType;
 use App\Enums\JewelryPricingMode;
 use App\Enums\MakingType;
 use App\Enums\OrderStatus;
-use App\Enums\PayType;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\PayType;
 use App\Enums\ProductUnit;
 use App\Enums\SaleChannel;
 use App\Enums\SaleStatus;
@@ -33,6 +33,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\RentalContract;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
@@ -117,16 +118,22 @@ class DemoSeeder extends Seeder
                 'state' => 'TX',
                 'postal_code' => '78701',
                 'country' => 'US',
+                'latitude' => 30.2672 + $type->id * 0.004,
+                'longitude' => -97.7431,
                 'currency' => 'USD',
                 'currency_decimals' => 2,
                 'timezone' => 'America/Chicago',
                 'status' => BusinessStatus::Active,
                 'allowed_ips' => ['127.0.0.1', '::1'],
+                'attendance_mode' => 'ip',
+                'geofence_radius_m' => 150,
                 'settings' => [
                     ...Business::DEFAULT_SETTINGS,
                     'pickup_enabled' => true,
                     'delivery_enabled' => true,
-                    'delivery_fee_cents' => 500,
+                    'delivery_base_fee_cents' => 200,
+                    'delivery_fee_per_km_cents' => 150,
+                    'delivery_max_km' => 15,
                     'minimum_order_cents' => 1500,
                 ],
             ],
@@ -445,7 +452,7 @@ class DemoSeeder extends Seeder
             );
 
             if ($status === VehicleStatus::Rented) {
-                \App\Models\RentalContract::query()->updateOrCreate(
+                RentalContract::query()->updateOrCreate(
                     ['business_id' => $business->id, 'contract_number' => 'RC-1001'],
                     [
                         'vehicle_id' => $vehicle->id,

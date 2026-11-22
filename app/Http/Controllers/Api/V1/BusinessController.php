@@ -9,9 +9,6 @@ use Illuminate\Http\JsonResponse;
 
 class BusinessController extends Controller
 {
-    /**
-     * @return JsonResponse
-     */
     public function types(): JsonResponse
     {
         $types = BusinessType::query()->where('is_active', true)->orderBy('sort_order')->get();
@@ -25,9 +22,6 @@ class BusinessController extends Controller
         ]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function index(): JsonResponse
     {
         $businesses = Business::query()->where('status', 'active')->get();
@@ -40,11 +34,15 @@ class BusinessController extends Controller
                 'email' => $business->email,
                 'address_line' => $business->address_line,
                 'city' => $business->city,
+                'latitude' => $business->latitude,
+                'longitude' => $business->longitude,
                 'type' => $business->businessType?->key,
                 'settings' => [
                     'pickup_enabled' => (bool) $business->settings('pickup_enabled'),
                     'delivery_enabled' => (bool) $business->settings('delivery_enabled'),
-                    'delivery_fee_cents' => (int) $business->settings('delivery_fee_cents', 0),
+                    'delivery_base_fee_cents' => (int) $business->settings('delivery_base_fee_cents', 0),
+                    'delivery_fee_per_km_cents' => (int) $business->settings('delivery_fee_per_km_cents', 0),
+                    'delivery_max_km' => (float) $business->settings('delivery_max_km', 0),
                     'minimum_order_cents' => (int) $business->settings('minimum_order_cents', 0),
                     'currency' => $business->currency,
                 ],
@@ -54,9 +52,6 @@ class BusinessController extends Controller
         ]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function show(Business $business): JsonResponse
     {
         return response()->json([
@@ -72,13 +67,18 @@ class BusinessController extends Controller
                 'state' => $business->state,
                 'postal_code' => $business->postal_code,
                 'country' => $business->country,
+                'latitude' => $business->latitude,
+                'longitude' => $business->longitude,
+                'tax_rate' => $business->taxRate(),
                 'type' => $business->businessType?->key,
                 'logo_url' => $business->getMedia('logo')->first()?->getUrl(),
                 'cover_url' => $business->getMedia('cover')->first()?->getUrl(),
                 'settings' => [
                     'pickup_enabled' => (bool) $business->settings('pickup_enabled'),
                     'delivery_enabled' => (bool) $business->settings('delivery_enabled'),
-                    'delivery_fee_cents' => (int) $business->settings('delivery_fee_cents', 0),
+                    'delivery_base_fee_cents' => (int) $business->settings('delivery_base_fee_cents', 0),
+                    'delivery_fee_per_km_cents' => (int) $business->settings('delivery_fee_per_km_cents', 0),
+                    'delivery_max_km' => (float) $business->settings('delivery_max_km', 0),
                     'minimum_order_cents' => (int) $business->settings('minimum_order_cents', 0),
                     'currency' => $business->currency,
                     'currency_decimals' => (int) $business->currency_decimals,

@@ -65,6 +65,17 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Setting a new password yourself clears the temporary-password flag;
+        // an admin reset sets both fields and keeps it.
+        static::saving(function (self $user): void {
+            if ($user->exists && $user->isDirty('password') && ! $user->isDirty('must_change_password')) {
+                $user->must_change_password = false;
+            }
+        });
+    }
+
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);

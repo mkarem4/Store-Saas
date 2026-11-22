@@ -10,9 +10,6 @@ use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {
-    /**
-     * @return JsonResponse
-     */
     public function show(Request $request): JsonResponse
     {
         $customer = $request->user();
@@ -40,9 +37,6 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function update(Request $request): JsonResponse
     {
         $customer = $request->user();
@@ -73,9 +67,6 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function destroy(Request $request): JsonResponse
     {
         $request->user()->delete();
@@ -83,9 +74,6 @@ class ProfileController extends Controller
         return response()->json(['message' => __('Account deleted.')]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function storeDevice(Request $request): JsonResponse
     {
         $data = $request->validate([

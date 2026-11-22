@@ -31,12 +31,38 @@ class BusinessFactory extends Factory
             'state' => fake()->stateAbbr(),
             'postal_code' => fake()->postcode(),
             'country' => 'US',
+            'latitude' => 40.7128,
+            'longitude' => -74.0060,
             'currency' => 'USD',
             'currency_decimals' => 2,
             'timezone' => 'America/New_York',
             'status' => BusinessStatus::Active,
-            'settings' => Business::DEFAULT_SETTINGS,
+            'settings' => array_merge(Business::DEFAULT_SETTINGS, [
+                'working_hours' => array_fill_keys(
+                    ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+                    ['open' => '00:00', 'close' => '24:00'],
+                ),
+            ]),
         ];
+    }
+
+    public function closed(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'settings' => array_merge($attributes['settings'] ?? Business::DEFAULT_SETTINGS, [
+                'working_hours' => array_fill_keys(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], null),
+            ]),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $settings
+     */
+    public function withSettings(array $settings): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'settings' => array_merge($attributes['settings'] ?? Business::DEFAULT_SETTINGS, $settings),
+        ]);
     }
 
     public function inactive(): static

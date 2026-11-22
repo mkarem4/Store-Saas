@@ -26,6 +26,7 @@ class Sale extends Model
         'order_id',
         'subtotal_cents',
         'discount_cents',
+        'tax_rate',
         'tax_cents',
         'total_cents',
         'cogs_cents',

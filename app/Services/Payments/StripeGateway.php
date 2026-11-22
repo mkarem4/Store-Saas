@@ -44,12 +44,6 @@ class StripeGateway implements PaymentGateway
             unset($payload['automatic_payment_methods']);
         }
 
-        $accountId = $order->business?->stripe_account_id;
-
-        if ($accountId !== null && $accountId !== '') {
-            $payload['transfer_data'] = ['destination' => $accountId];
-        }
-
         $intent = $this->client->paymentIntents->create($payload, [
             'idempotency_key' => 'order-'.$order->idempotency_key,
         ]);
@@ -79,15 +73,34 @@ class StripeGateway implements PaymentGateway
         $this->client->paymentIntents->cancel($order->payment_intent_id);
     }
 
-    public function refund(Order $order, int $amountCents): void
+    public function refund(Order $order, int $amountCents): ?string
     {
         if (blank($order->payment_intent_id)) {
-            return;
+            return null;
         }
 
-        $this->client->refunds->create([
+        $refund = $this->client->refunds->create([
             'payment_intent' => $order->payment_intent_id,
             'amount' => $amountCents,
+        ], [
+            'idempotency_key' => 'refund-'.$order->id.'-'.$amountCents.'-'.$order->refunded_cents,
         ]);
+
+        return $refund->id;
+    }
+
+    public function feeFor(Order $order): ?int
+    {
+        if (blank($order->payment_intent_id)) {
+            return null;
+        }
+
+        $intent = $this->client->paymentIntents->retrieve($order->payment_intent_id, [
+            'expand' => ['latest_charge.balance_transaction'],
+        ]);
+
+        $balance = $intent->latest_charge->balance_transaction ?? null;
+
+        return is_object($balance) && isset($balance->fee) ? (int) $balance->fee : null;
     }
 }

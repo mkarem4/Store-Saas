@@ -5,7 +5,6 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Business;
 use App\Models\Customer;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Sale;
@@ -81,7 +80,7 @@ it('is idempotent when the same idempotency key is reused', function (): void {
         ->and((float) $variant->fresh()->reserved_qty)->toBe(1.0);
 });
 
-it('accepts a pending order, captures and records the sale', function (): void {
+it('accepts a pending order and captures without touching stock yet', function (): void {
     [$business, , $variant] = businessWithVariant();
     $customer = Customer::factory()->create();
 
@@ -102,15 +101,10 @@ it('accepts a pending order, captures and records the sale', function (): void {
 
     $variant->refresh();
 
-    expect((float) $variant->stock_qty)->toBe(98.0)
-        ->and((float) $variant->reserved_qty)->toBe(0.0);
-
-    expect(Order::query()->where('id', $order->id)->value('sale_id'))->not->toBeNull();
-
-    $sale = Sale::query()->where('order_id', $order->id)->first();
-
-    expect($sale)->not->toBeNull()
-        ->and($sale->total_cents)->toBe($order->total_cents);
+    // Reserved until hand-over; the sale is recorded on completion (M7.4).
+    expect((float) $variant->stock_qty)->toBe(100.0)
+        ->and((float) $variant->reserved_qty)->toBe(2.0)
+        ->and(Sale::query()->where('order_id', $order->id)->exists())->toBeFalse();
 });
 
 it('rejects an already accepted order', function (): void {

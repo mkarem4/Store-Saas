@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum InquiryStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum InquiryStatus: string implements HasColor, HasLabel
 {
     case New = 'new';
     case Contacted = 'contacted';
@@ -24,5 +27,15 @@ enum InquiryStatus: string
             self::Contacted => 'info',
             self::Closed => 'gray',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return $this->color();
     }
 }

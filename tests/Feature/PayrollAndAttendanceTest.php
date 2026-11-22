@@ -3,6 +3,7 @@
 use App\Enums\PayType;
 use App\Enums\SaleStatus;
 use App\Models\Business;
+use App\Models\BusinessType;
 use App\Models\Employee;
 use App\Models\Expense;
 use App\Models\PayrollRun;
@@ -87,8 +88,9 @@ it('pays hourly wages from timed entries within the period', function (): void {
         ->and($run->gross_cents)->toBe(1800);
 });
 
-it('adds commission on net completed sales', function (): void {
-    $business = Business::factory()->create();
+it('adds commission on net completed sales for car showroom staff', function (): void {
+    $type = BusinessType::factory()->create(['key' => 'car_showroom']);
+    $business = Business::factory()->create(['business_type_id' => $type->id]);
     $employee = Employee::factory()->withCommission(500)->create([
         'business_id' => $business->id,
     ]);
@@ -188,4 +190,48 @@ it('allows clock-in when the business has no IP restriction', function (): void 
     $entry = app(AttendanceService::class)->clockIn($employee, '203.0.113.9');
 
     expect($entry->id)->not->toBeNull();
+});
+
+it('pays no commission in store types other than car showroom and jewelry', function (): void {
+    $business = Business::factory()->create();
+    $employee = Employee::factory()->withCommission(500)->create(['business_id' => $business->id]);
+
+    Sale::factory()->create([
+        'business_id' => $business->id,
+        'employee_id' => $employee->id,
+        'subtotal_cents' => 10000,
+        'total_cents' => 10000,
+        'status' => SaleStatus::Completed,
+        'sold_at' => now()->startOfDay()->setTime(15, 0),
+    ]);
+
+    expect(app(PayrollService::class)->commission($employee, now(), now()))->toBe(0);
+});
+
+it('blocks approval while auto-closed attendance is unreviewed, and adjusts draft payslips', function (): void {
+    $business = Business::factory()->create();
+    $employee = Employee::factory()->create(['business_id' => $business->id, 'pay_type' => PayType::Monthly, 'monthly_salary_cents' => 300000]);
+
+    TimeEntry::query()->create([
+        'business_id' => $business->id,
+        'employee_id' => $employee->id,
+        'clock_in_at' => now()->startOfMonth()->setTime(14, 0),
+        'clock_out_at' => now()->startOfMonth()->endOfDay(),
+        'is_auto_closed' => true,
+    ]);
+
+    $service = app(PayrollService::class);
+    $run = $service->generate($business, now()->startOfMonth(), now()->endOfMonth());
+
+    expect(fn () => $service->approve($run))->toThrow(InvalidArgumentException::class, 'auto-closed');
+
+    $slip = $run->payslips->first();
+    $service->adjustPayslip($slip, 20000, 5000, 'Transport / advance');
+
+    expect($run->refresh()->total_cents)->toBe(315000);
+
+    TimeEntry::query()->update(['reviewed_at' => now()]);
+    $service->approve($run->refresh());
+
+    expect(fn () => $service->adjustPayslip($slip->refresh(), 0, 0))->toThrow(InvalidArgumentException::class, 'next month');
 });

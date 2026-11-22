@@ -18,6 +18,8 @@ class CustomerAddress extends Model
         'city',
         'state',
         'postal_code',
+        'latitude',
+        'longitude',
         'phone',
         'is_default',
     ];
@@ -26,6 +28,8 @@ class CustomerAddress extends Model
     {
         return [
             'is_default' => 'boolean',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 

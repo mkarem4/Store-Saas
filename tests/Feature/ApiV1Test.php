@@ -1,14 +1,18 @@
 <?php
 
 use App\Contracts\PaymentGateway;
+use App\Contracts\PushNotifier;
 use App\Enums\FulfillmentType;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Inquiry;
+use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Notifications\CustomerResetPassword;
 use App\Services\OrderService;
 use App\Services\Payments\FakeGateway;
+use Illuminate\Support\Facades\Notification;
 
 function apiBusinessWithVariant(int $stockQty = 100): array
 {
@@ -238,7 +242,61 @@ it('handles a Stripe payment_intent.succeeded webhook', function (): void {
 
     $order->refresh();
 
+    // Captured and accepted; the unit stays reserved until hand-over.
     expect($order->status->value)->toBe('accepted')
         ->and($order->payment_status->value)->toBe('captured')
-        ->and((float) $variant->fresh()->stock_qty)->toBe(9.0);
+        ->and((float) $variant->fresh()->stock_qty)->toBe(10.0)
+        ->and((float) $variant->fresh()->reserved_qty)->toBe(1.0);
+
+    // Stripe retries the same event: processed once only.
+    $this->call('POST', '/webhooks/stripe', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_ACCEPT' => 'application/json',
+    ], $payload)->assertOk()->assertJsonPath('duplicate', true);
+
+    expect(OrderStatusHistory::query()->where('order_id', $order->id)->where('status', 'accepted')->count())->toBe(1);
+});
+
+it('resets a customer password with the e-mailed token', function (): void {
+    Notification::fake();
+    $customer = Customer::factory()->create(['email' => 'mia@app.test']);
+
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'mia@app.test'])->assertOk();
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'nobody@app.test'])->assertOk();
+
+    $token = null;
+    Notification::assertSentTo($customer, CustomerResetPassword::class, function ($notification) use (&$token): bool {
+        $token = $notification->token;
+
+        return true;
+    });
+
+    $this->postJson('/api/v1/auth/reset-password', ['email' => 'mia@app.test', 'token' => $token, 'password' => 'NewSecret99', 'password_confirmation' => 'NewSecret99'])->assertOk();
+
+    $this->postJson('/api/v1/auth/login', ['email' => 'mia@app.test', 'password' => 'NewSecret99'])->assertOk()->assertJsonStructure(['token']);
+});
+
+it('pushes order status changes to the customer devices', function (): void {
+    $push = new class implements PushNotifier
+    {
+        public array $sent = [];
+
+        public function send(Customer $customer, string $title, string $body, array $data = []): int
+        {
+            $this->sent[] = $data['status'];
+
+            return 1;
+        }
+    };
+    app()->instance(PushNotifier::class, $push);
+
+    $business = Business::factory()->create();
+    $product = Product::factory()->forBusiness($business)->create(['track_stock' => false, 'is_published' => true, 'is_available' => true]);
+    $variant = ProductVariant::factory()->forProduct($product)->create(['retail_price_cents' => 1000]);
+    $order = app(OrderService::class)->place(Customer::factory()->create(), $business, [['variant_id' => $variant->id, 'qty' => 1]], FulfillmentType::Pickup);
+
+    app(OrderService::class)->accept($order);
+    $order->update(['expires_at' => now()->subMinute()]);
+
+    expect($push->sent)->toBe(['accepted']);
 });

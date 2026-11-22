@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SetPermissionTeam;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,12 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\SetPermissionTeam::class,
+            SetLocale::class,
+            SetPermissionTeam::class,
         ]);
 
         $middleware->api(append: [
-            \App\Http\Middleware\SetLocale::class,
+            SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

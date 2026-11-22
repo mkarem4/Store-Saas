@@ -11,9 +11,6 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /**
-     * @return JsonResponse
-     */
     public function index(Request $request, Business $business): JsonResponse
     {
         $perPage = min((int) $request->query('per_page', 24), 100);
@@ -28,7 +25,7 @@ class ProductController extends Controller
             )
             ->when(
                 $request->filled('search'),
-                fn ($query) => $query->whereRaw("name LIKE ?", ['%'.(string) $request->query('search').'%']),
+                fn ($query) => $query->whereRaw('name LIKE ?', ['%'.(string) $request->query('search').'%']),
             )
             ->with(['variants' => fn ($query) => $query->orderBy('sort_order'), 'category'])
             ->orderBy('sort_order')
@@ -45,9 +42,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function show(Business $business, Product $product): JsonResponse
     {
         abort_unless((int) $product->business_id === (int) $business->id, 404);

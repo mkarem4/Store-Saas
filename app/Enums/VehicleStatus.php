@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum VehicleStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum VehicleStatus: string implements HasColor, HasLabel
 {
     case Available = 'available';
     case Reserved = 'reserved';
@@ -29,5 +32,15 @@ enum VehicleStatus: string
             self::Sold => 'gray',
             self::Maintenance => 'warning',
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return $this->color();
     }
 }

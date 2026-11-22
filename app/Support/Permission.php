@@ -56,6 +56,10 @@ final class Permission
 
     public const ViewCommissions = 'commissions.view';
 
+    public const SellWholesale = 'sell_wholesale';
+
+    public const ManageWallet = 'wallet.manage';
+
     /**
      * @return array<int, string>
      */
@@ -88,6 +92,8 @@ final class Permission
             self::ManageGoldPrices,
             self::ManageModifiers,
             self::ViewCommissions,
+            self::SellWholesale,
+            self::ManageWallet,
         ];
     }
 

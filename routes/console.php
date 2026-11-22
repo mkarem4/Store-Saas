@@ -9,3 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('orders:expire')->everyFiveMinutes();
+Schedule::command('wallet:release')->hourly()->withoutOverlapping();
+Schedule::command('attendance:auto-close')->everyThirtyMinutes()->withoutOverlapping();
+Schedule::command('gold:fetch')->hourlyAt(5)->withoutOverlapping();
+Schedule::command('expenses:recurring')->dailyAt('00:30')->withoutOverlapping();

@@ -2,7 +2,10 @@
 
 namespace App\Enums;
 
-enum SaleStatus: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum SaleStatus: string implements HasColor, HasLabel
 {
     case Completed = 'completed';
     case PartiallyRefunded = 'partially_refunded';
@@ -17,5 +20,25 @@ enum SaleStatus: string
             self::Refunded => __('Refunded'),
             self::Void => __('Void'),
         };
+    }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::Completed => 'success',
+            self::PartiallyRefunded => 'warning',
+            self::Refunded => 'gray',
+            self::Void => 'danger',
+        };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return $this->color();
     }
 }

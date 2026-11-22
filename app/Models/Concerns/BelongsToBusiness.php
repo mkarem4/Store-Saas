@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Models\Business;
 use App\Support\BusinessContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,6 +33,6 @@ trait BelongsToBusiness
 
     public function business(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Business::class);
+        return $this->belongsTo(Business::class);
     }
 }

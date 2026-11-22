@@ -2,39 +2,42 @@
 
 namespace App\Filament\Forms\Components;
 
+use App\Support\BusinessContext;
 use App\Support\Money;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\TextInput;
 
+/**
+ * Edits an integer-cents column as a decimal amount (spec §7: money is
+ * stored as integers).
+ */
 class MoneyInput extends TextInput
 {
-    protected string $view = 'filament.forms.components.text-input';
+    protected bool $allowsNegative = false;
 
-    /**
-     * Relative state path of the integer-cents column this field mirrors.
-     */
-    protected ?string $centsStatePath = null;
-
-    public function centsStatePath(?string $path): static
+    public function allowNegative(bool $condition = true): static
     {
-        $this->centsStatePath = $path;
+        $this->allowsNegative = $condition;
 
         return $this;
     }
 
-    public function initialize(): void
+    protected function setUp(): void
     {
-        parent::initialize();
+        parent::setUp();
 
         $this->numeric();
-        $this->suffix(fn (): string => config('app.currency', 'USD'));
+        $this->step('0.01');
+        $this->minValue(fn (): ?int => $this->allowsNegative ? null : 0);
+        $this->prefix(fn (): string => BusinessContext::business()?->currency ?? 'USD');
 
-        $this->formatStateUsing(function (?string $state): mixed {
+        $this->formatStateUsing(function (mixed $state): ?string {
             if ($state === null || $state === '') {
-                return $state;
+                return null;
             }
 
-            return number_format(Money::fromCents((int) $state), 2, '.', ',');
+            return number_format(Money::fromCents((int) $state), 2, '.', '');
         });
+
+        $this->dehydrateStateUsing(fn (mixed $state): int => Money::toCents($state));
     }
 }

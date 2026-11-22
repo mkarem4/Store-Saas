@@ -109,8 +109,13 @@ class ProductVariant extends Model
 
     public function displayName(): string
     {
-        $name = $this->translated('name');
+        $variant = $this->translated('name');
+        $product = (string) $this->product?->translatedName();
 
-        return $name !== '' ? $name : $this->product->translatedName();
+        if ($variant === '' || $variant === $product) {
+            return $product;
+        }
+
+        return $product === '' ? $variant : "{$product} · {$variant}";
     }
 }

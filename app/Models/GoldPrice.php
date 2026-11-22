@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\GoldPriceSource;
 use App\Models\Concerns\BelongsToBusiness;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,7 @@ class GoldPrice extends Model
         'business_id',
         'karat',
         'price_per_gram_cents',
+        'source',
         'effective_date',
     ];
 
@@ -22,6 +24,7 @@ class GoldPrice extends Model
     {
         return [
             'effective_date' => 'date',
+            'source' => GoldPriceSource::class,
         ];
     }
 

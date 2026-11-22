@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToBusiness;
+use App\Models\Concerns\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ class ModifierGroup extends Model
 {
     use BelongsToBusiness;
     use HasFactory;
+    use HasTranslations;
 
     protected $fillable = [
         'business_id',
@@ -39,5 +41,10 @@ class ModifierGroup extends Model
     public function modifiers(): HasMany
     {
         return $this->hasMany(Modifier::class)->orderBy('sort_order');
+    }
+
+    public function translatedName(): string
+    {
+        return $this->translated('name');
     }
 }

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\AttendanceMode;
 use App\Enums\BusinessStatus;
 use App\Models\Concerns\HasTranslations;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Spatie\MediaLibrary\HasMedia;
@@ -23,12 +26,13 @@ class Business extends Model implements HasMedia, HasName
     public const DEFAULT_SETTINGS = [
         'pickup_enabled' => true,
         'delivery_enabled' => false,
-        'delivery_fee_cents' => 0,
+        'delivery_fee_per_km_cents' => 0,
+        'delivery_base_fee_cents' => 0,
+        'delivery_max_km' => 10,
         'minimum_order_cents' => 0,
         'accept_timeout_minutes' => 10,
         'orders_paused' => false,
         'allow_negative_stock' => false,
-        'tax_rate' => null,
         'working_hours' => [
             'mon' => ['open' => '09:00', 'close' => '21:00'],
             'tue' => ['open' => '09:00', 'close' => '21:00'],
@@ -53,13 +57,15 @@ class Business extends Model implements HasMedia, HasName
         'state',
         'postal_code',
         'country',
+        'latitude',
+        'longitude',
         'currency',
         'currency_decimals',
         'timezone',
         'status',
         'allowed_ips',
-        'stripe_account_id',
-        'stripe_onboarding_complete',
+        'attendance_mode',
+        'geofence_radius_m',
         'settings',
     ];
 
@@ -70,8 +76,11 @@ class Business extends Model implements HasMedia, HasName
             'description' => 'array',
             'status' => BusinessStatus::class,
             'allowed_ips' => 'array',
+            'attendance_mode' => AttendanceMode::class,
+            'geofence_radius_m' => 'integer',
+            'latitude' => 'float',
+            'longitude' => 'float',
             'settings' => 'array',
-            'stripe_onboarding_complete' => 'boolean',
         ];
     }
 
@@ -95,12 +104,12 @@ class Business extends Model implements HasMedia, HasName
         return $this->belongsTo(BusinessType::class);
     }
 
-    public function users(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
-    public function owner(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function owner(): HasOne
     {
         return $this->hasOne(User::class)->where('role', 'business_owner');
     }
@@ -163,9 +172,39 @@ class Business extends Model implements HasMedia, HasName
         return $this->status === BusinessStatus::Active;
     }
 
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(BusinessWallet::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function payoutMethods(): HasMany
+    {
+        return $this->hasMany(PayoutMethod::class);
+    }
+
+    public function payoutRequests(): HasMany
+    {
+        return $this->hasMany(PayoutRequest::class);
+    }
+
+    /**
+     * Sales tax percentage for the store's region (D31): state rate, then the
+     * country rate, then the platform default (15% until the client's file arrives).
+     */
     public function taxRate(): float
     {
-        return (float) ($this->settings('tax_rate') ?? PlatformSetting::get('tax_rate', 15));
+        return TaxRate::lookup($this->country, $this->state)
+            ?? (float) PlatformSetting::get('default_tax_rate', PlatformSetting::get('tax_rate', 15));
+    }
+
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
     }
 
     public function acceptsOrders(): bool

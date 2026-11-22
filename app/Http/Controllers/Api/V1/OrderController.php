@@ -29,7 +29,7 @@ class OrderController extends Controller
                 $business,
                 $data['items'],
                 FulfillmentType::from($data['fulfillment']),
-                $data['address'] ?? null,
+                $this->address($request, $data),
             );
         } catch (\InvalidArgumentException $exception) {
             throw ValidationException::withMessages(['' => $exception->getMessage()]);
@@ -56,7 +56,7 @@ class OrderController extends Controller
                 $business,
                 $data['items'],
                 FulfillmentType::from($data['fulfillment']),
-                $data['address'] ?? null,
+                $this->address($request, $data),
                 $request->input('notes'),
                 $request->header('Idempotency-Key'),
                 $request->input('payment_method_id'),
@@ -132,13 +132,51 @@ class OrderController extends Controller
             'items.*.qty' => ['required', 'numeric', 'min:0.001'],
             'items.*.modifier_ids' => ['array'],
             'items.*.modifier_ids.*' => ['integer'],
+            'address_id' => ['nullable', 'integer'],
             'address' => ['nullable', 'array'],
             'address.line1' => ['required_with:address', 'string', 'max:255'],
             'address.line2' => ['nullable', 'string', 'max:255'],
             'address.city' => ['required_with:address', 'string', 'max:120'],
             'address.phone' => ['required_with:address', 'string', 'max:32'],
             'address.notes' => ['nullable', 'string', 'max:500'],
+            'address.latitude' => ['required_with:address', 'numeric', 'between:-90,90'],
+            'address.longitude' => ['required_with:address', 'numeric', 'between:-180,180'],
         ]);
+    }
+
+    /**
+     * Delivery address from a saved address (address_id) or inline fields.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>|null
+     */
+    private function address(Request $request, array $data): ?array
+    {
+        if (($data['fulfillment'] ?? null) !== FulfillmentType::Delivery->value) {
+            return null;
+        }
+
+        if (! empty($data['address_id']) && $request->user() !== null) {
+            $saved = $request->user()->addresses()->find($data['address_id']);
+
+            if ($saved === null) {
+                throw ValidationException::withMessages(['address_id' => __('Address not found.')]);
+            }
+
+            return [
+                'line1' => $saved->address_line1,
+                'line2' => $saved->address_line2,
+                'city' => $saved->city,
+                'state' => $saved->state,
+                'postal_code' => $saved->postal_code,
+                'phone' => $saved->phone ?? $request->user()->phone,
+                'notes' => $data['address']['notes'] ?? null,
+                'latitude' => $saved->latitude,
+                'longitude' => $saved->longitude,
+            ];
+        }
+
+        return $data['address'] ?? null;
     }
 
     private function business(Request $request): Business
@@ -166,8 +204,11 @@ class OrderController extends Controller
             'payment_status' => $order->payment_status->value,
             'subtotal_cents' => $order->subtotal_cents,
             'delivery_fee_cents' => $order->delivery_fee_cents,
+            'delivery_distance_km' => $order->delivery_distance_km,
             'discount_cents' => $order->discount_cents,
+            'tax_rate' => $order->tax_rate,
             'tax_cents' => $order->tax_cents,
+            'refunded_cents' => $order->refunded_cents,
             'total_cents' => $order->total_cents,
             'notes' => $order->notes,
             'placed_at' => $order->placed_at?->toIso8601String(),

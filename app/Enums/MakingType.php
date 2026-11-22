@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum MakingType: string
+use Filament\Support\Contracts\HasLabel;
+
+enum MakingType: string implements HasLabel
 {
     case Fixed = 'fixed';
     case Percentage = 'percentage';
@@ -13,5 +15,10 @@ enum MakingType: string
             self::Fixed => __('Fixed amount'),
             self::Percentage => __('Percentage'),
         };
+    }
+
+    public function getLabel(): string
+    {
+        return $this->label();
     }
 }

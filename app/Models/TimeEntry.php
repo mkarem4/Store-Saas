@@ -18,10 +18,15 @@ class TimeEntry extends Model
         'clock_in_at',
         'clock_out_at',
         'clock_in_ip',
+        'clock_in_lat',
+        'clock_in_lng',
         'clock_out_ip',
+        'clock_out_lat',
+        'clock_out_lng',
         'is_auto_closed',
         'reviewed_at',
         'reviewed_by',
+        'review_reason',
         'notes',
     ];
 

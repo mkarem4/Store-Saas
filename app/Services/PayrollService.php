@@ -11,6 +11,7 @@ use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
+use App\Models\Refund;
 use App\Models\Sale;
 use App\Models\TimeEntry;
 use Illuminate\Support\Carbon;
@@ -29,7 +30,7 @@ class PayrollService
             throw new InvalidArgumentException(__('The period end must be after the period start.'));
         }
 
-        return DB::transaction(function () use ($business, $periodStart, $periodEnd, $userId): PayrollRun {
+        return DB::transaction(function () use ($business, $periodStart, $periodEnd): PayrollRun {
             $run = PayrollRun::query()->create([
                 'business_id' => $business->id,
                 'period_start' => $periodStart->toDateString(),
@@ -88,10 +89,84 @@ class PayrollService
         });
     }
 
+    /**
+     * Manual allowances/deductions on a draft payslip (M4.6).
+     */
+    public function adjustPayslip(Payslip $payslip, int $allowancesCents, int $deductionsCents, ?string $note = null, ?int $userId = null): Payslip
+    {
+        $run = $payslip->payrollRun;
+
+        if ($run->isApproved()) {
+            throw new InvalidArgumentException(__('Approved payroll cannot be changed; correct it in next month\'s run.'));
+        }
+
+        if ($allowancesCents < 0 || $deductionsCents < 0) {
+            throw new InvalidArgumentException(__('Amounts cannot be negative.'));
+        }
+
+        return DB::transaction(function () use ($payslip, $run, $allowancesCents, $deductionsCents, $note, $userId): Payslip {
+            $before = $payslip->only(['allowances_cents', 'deductions_cents']);
+
+            $payslip->update([
+                'allowances_cents' => $allowancesCents,
+                'deductions_cents' => $deductionsCents,
+                'total_cents' => max(0, (int) $payslip->base_cents + $allowancesCents + (int) $payslip->commission_cents - $deductionsCents),
+                'meta' => array_merge($payslip->meta ?? [], ['adjustment_note' => $note]),
+            ]);
+
+            $this->recalculate($run);
+
+            activity('payroll')->performedOn($payslip)->causedBy($userId)
+                ->withProperties(['old' => $before, 'attributes' => $payslip->only(['allowances_cents', 'deductions_cents']), 'note' => $note])
+                ->log('payslip.adjusted');
+
+            return $payslip->refresh();
+        });
+    }
+
+    public function recalculate(PayrollRun $run): PayrollRun
+    {
+        $payslips = $run->payslips()->get();
+
+        $run->update([
+            'gross_cents' => (int) $payslips->sum(fn (Payslip $slip): int => (int) $slip->base_cents + (int) $slip->allowances_cents),
+            'commission_cents' => (int) $payslips->sum('commission_cents'),
+            'deductions_cents' => (int) $payslips->sum('deductions_cents'),
+            'total_cents' => (int) $payslips->sum('total_cents'),
+        ]);
+
+        return $run->refresh();
+    }
+
+    /**
+     * Auto-closed attendance in the period that the owner has not reviewed
+     * yet (rule 8 / M4.8). Approval is blocked while any remain.
+     */
+    public function unreviewedEntries(PayrollRun $run): int
+    {
+        return TimeEntry::query()
+            ->withoutGlobalScope('business')
+            ->where('business_id', $run->business_id)
+            ->where('is_auto_closed', true)
+            ->whereNull('reviewed_at')
+            ->whereBetween('clock_in_at', [$run->period_start->copy()->startOfDay(), $run->period_end->copy()->endOfDay()])
+            ->count();
+    }
+
     public function approve(PayrollRun $run, ?int $userId = null): PayrollRun
     {
         if ($run->isApproved()) {
             throw new InvalidArgumentException(__('This payroll run is already approved.'));
+        }
+
+        $pending = $this->unreviewedEntries($run);
+
+        if ($pending > 0) {
+            throw new InvalidArgumentException(trans_choice(
+                '{1} Review the auto-closed attendance entry before approving.|[2,*] Review the :count auto-closed attendance entries before approving.',
+                $pending,
+                ['count' => $pending],
+            ));
         }
 
         return DB::transaction(function () use ($run, $userId): PayrollRun {
@@ -152,21 +227,48 @@ class PayrollService
         return $minutes;
     }
 
+    /**
+     * Business types whose staff earn sales commission (D16).
+     */
+    public const COMMISSION_TYPES = ['car_showroom', 'jewelry'];
+
+    /**
+     * Commission = employee rate × the value of their sales in the period,
+     * net of discounts and returns, excluding tax (D16, rule 17).
+     */
     public function commission(Employee $employee, Carbon $start, Carbon $end): int
     {
         if ($employee->commission_rate_bps <= 0) {
             return 0;
         }
 
+        if (! in_array($employee->business?->businessType?->key, self::COMMISSION_TYPES, true)) {
+            return 0;
+        }
+
+        return (int) round($this->netSales($employee, $start, $end) * $employee->commission_rate_bps / 10000);
+    }
+
+    public function netSales(Employee $employee, Carbon $start, Carbon $end): int
+    {
+        $timezone = $employee->business?->timezone ?: config('app.timezone');
+        $from = Carbon::parse($start->toDateString(), $timezone)->startOfDay()->utc();
+        $to = Carbon::parse($end->toDateString(), $timezone)->endOfDay()->utc();
+
         $sales = Sale::query()
+            ->withoutGlobalScope('business')
             ->where('employee_id', $employee->id)
-            ->whereIn('status', [SaleStatus::Completed, SaleStatus::PartiallyRefunded])
-            ->whereBetween('sold_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
-            ->get();
+            ->where('status', '!=', SaleStatus::Void)
+            ->whereBetween('sold_at', [$from, $to])
+            ->get(['id', 'total_cents', 'tax_cents']);
 
-        $net = (int) $sales->sum(fn (Sale $sale): int => max(0, (int) $sale->subtotal_cents - (int) $sale->discount_cents));
+        $refunded = (int) Refund::query()
+            ->withoutGlobalScope('business')
+            ->whereIn('sale_id', $sales->modelKeys())
+            ->selectRaw('sum(amount_cents - tax_cents) as net')
+            ->value('net');
 
-        return (int) round($net * $employee->commission_rate_bps / 10000);
+        return max(0, (int) $sales->sum(fn (Sale $sale): int => (int) $sale->total_cents - (int) $sale->tax_cents) - $refunded);
     }
 
     private function monthlyBase(Employee $employee, Carbon $start, Carbon $end): int
