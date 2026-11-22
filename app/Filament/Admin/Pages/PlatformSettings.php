@@ -10,11 +10,15 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 class PlatformSettings extends SettingsPage
 {
+    // Settings read best at a comfortable width, not stretched across a wide screen.
+    protected Width|string|null $maxContentWidth = Width::FiveExtraLarge;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected static string|UnitEnum|null $navigationGroup = 'Platform';
@@ -61,18 +65,18 @@ class PlatformSettings extends SettingsPage
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make(__('General'))->columns(2)->schema([
+            Section::make(__('General'))->aside()->description(__('The name and contact stores see.'))->columns(1)->schema([
                 TextInput::make('platform_name')->label(__('Platform name'))->required(),
                 TextInput::make('support_email')->label(__('Support email'))->email(),
             ]),
-            Section::make(__('Tax'))->columns(2)->description(__('Regional rates live under Tax rates; this default applies where no rate is set.'))->schema([
+            Section::make(__('Tax'))->aside()->columns(1)->description(__('Regional rates live under Tax rates; this default applies where no rate is set.'))->schema([
                 TextInput::make('default_tax_rate')->label(__('Default tax rate'))->numeric()->suffix('%')->minValue(0)->maxValue(100)->required(),
                 Select::make('tax_scope')->label(__('Tax applies to'))->required()->options([
                     'all' => __('POS sales and app orders'),
                     'app_only' => __('App orders only'),
                 ]),
             ]),
-            Section::make(__('Payments & payouts'))->columns(3)->schema([
+            Section::make(__('Payments & payouts'))->aside()->description(__('What the platform keeps and when stores can withdraw.'))->columns(1)->schema([
                 TextInput::make('commission_rate')->label(__('Platform commission'))->numeric()->suffix('%')->minValue(0)->maxValue(100)->required()
                     ->helperText(__('Charged on product value of app orders, excluding tax and delivery.')),
                 TextInput::make('wallet_hold_days')->label(__('Hold period (days)'))->integer()->minValue(0)->required()

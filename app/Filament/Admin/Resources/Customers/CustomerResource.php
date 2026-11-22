@@ -4,12 +4,14 @@ namespace App\Filament\Admin\Resources\Customers;
 
 use App\Filament\Admin\Resources\Customers\Pages\ListCustomers;
 use App\Models\Customer;
+use App\Support\Ltr;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class CustomerResource extends Resource
@@ -44,7 +46,7 @@ class CustomerResource extends Resource
             ->columns([
                 TextColumn::make('name')->label(__('Name'))->searchable(),
                 TextColumn::make('email')->label(__('Email'))->searchable(),
-                TextColumn::make('phone')->label(__('Phone'))->searchable(),
+                TextColumn::make('phone')->label(__('Phone'))->searchable()->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state)),
                 TextColumn::make('orders_count')->label(__('Orders'))->counts('orders')->sortable(),
                 TextColumn::make('created_at')->label(__('Joined'))->date()->sortable(),
             ])

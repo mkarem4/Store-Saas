@@ -9,6 +9,8 @@ use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Support\Ltr;
+use App\Support\Money;
 use App\Support\Permission;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -25,6 +27,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use InvalidArgumentException;
 use Stripe\Exception\ApiErrorException;
 use UnitEnum;
@@ -84,7 +87,7 @@ class OrderResource extends BusinessResource
             TextEntry::make('payment_status')->label(__('Payment'))->badge(),
             TextEntry::make('fulfillment')->label(__('Fulfillment'))->badge()->color('gray'),
             TextEntry::make('customer.name')->label(__('Customer')),
-            TextEntry::make('customer.phone')->label(__('Phone'))->placeholder('—'),
+            TextEntry::make('customer.phone')->label(__('Phone'))->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->placeholder('—'),
             TextEntry::make('placed_at')->label(__('Placed'))->dateTime(),
             TextEntry::make('expires_at')->label(__('Accept before'))->dateTime()->visible(fn (Order $record): bool => $record->isPending()),
             TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(3)
@@ -133,13 +136,16 @@ class OrderResource extends BusinessResource
             ->defaultSort('placed_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['customer', 'items']))
             ->columns([
-                TextColumn::make('number')->label(__('Order #'))->searchable(),
-                TextColumn::make('placed_at')->label(__('Placed'))->since()->sortable(),
-                TextColumn::make('customer.name')->label(__('Customer'))->searchable(),
-                TextColumn::make('fulfillment')->label(__('Type'))->badge()->color('gray'),
-                TextColumn::make('items_count')->label(__('Items'))->counts('items'),
-                TextColumn::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100),
-                TextColumn::make('payment_status')->label(__('Payment'))->badge(),
+                TextColumn::make('number')->label(__('Order #'))->searchable()->weight('medium')->extraAttributes(['class' => 'yl-ltr']),
+                TextColumn::make('placed_at')->label(__('Placed'))->since()->sortable()
+                    ->dateTimeTooltip(),
+                TextColumn::make('customer.name')->label(__('Customer'))->searchable()
+                    ->description(fn (Order $record): ?HtmlString => Ltr::wrap($record->customer?->phone)),
+                TextColumn::make('fulfillment')->label(__('Fulfillment'))->badge()->color('gray'),
+                TextColumn::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100)->sortable()
+                    ->description(fn (Order $record): string => trans_choice(':count item|:count items', $record->items->count())),
+                // Payment and order status are separate facts: the card icon marks the payment one.
+                TextColumn::make('payment_status')->label(__('Payment'))->badge()->icon(Heroicon::OutlinedCreditCard),
                 TextColumn::make('status')->label(__('Status'))->badge(),
             ])
             ->filters([
@@ -163,6 +169,11 @@ class OrderResource extends BusinessResource
         return [
             Action::make('accept')->label(__('Accept'))->icon(Heroicon::OutlinedCheck)->color('success')->button()
                 ->visible(fn (Order $record): bool => $record->isPending() && $record->payment_status === PaymentStatus::Authorized)
+                // Accepting captures the held card payment; say so before it happens.
+                ->requiresConfirmation()
+                ->modalHeading(fn (Order $record): string => __('Accept order :number?', ['number' => $record->number]))
+                ->modalDescription(fn (Order $record): string => __('The customer\'s card is charged :amount now. Start preparing once you accept.', ['amount' => Money::format($record->total_cents, BusinessPanel::currency())]))
+                ->modalSubmitActionLabel(__('Accept and charge'))
                 ->action(fn (Order $record) => self::run(fn () => $service()->accept($record, auth()->id()), __('Order accepted, payment captured'))),
             Action::make('reject')->label(__('Reject'))->icon(Heroicon::OutlinedXMark)->color('danger')
                 ->visible(fn (Order $record): bool => $record->isPending())

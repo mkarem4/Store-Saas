@@ -1,0 +1,47 @@
+<?php
+
+// Audit-log wording: event keys, areas and record types as people read them.
+return [
+    'events' => [
+        'vehicle.sold' => 'Vehicle sold',
+        'time_entry.reviewed' => 'Shift reviewed',
+        'impersonation.started' => 'Signed in as store owner',
+        'impersonation.ended' => 'Returned to the platform',
+        'employee.pay_changed' => 'Pay changed',
+        'sale.refunded' => 'Sale returned',
+        'expense.created' => 'Expense added',
+        'expense.updated' => 'Expense edited',
+        'expense.deleted' => 'Expense deleted',
+        'business.created' => 'Store created',
+        'payslip.adjusted' => 'Payslip adjusted',
+        'store.settings_updated' => 'Store settings changed',
+        'price.changed' => 'Price changed',
+        'created' => 'Created',
+        'updated' => 'Updated',
+        'deleted' => 'Deleted',
+    ],
+    'areas' => [
+        'attendance' => 'Attendance',
+        'catalog' => 'Catalog',
+        'expenses' => 'Expenses',
+        'impersonation' => 'Store access',
+        'payroll' => 'Payroll',
+        'sales' => 'Sales',
+        'settings' => 'Settings',
+        'stores' => 'Stores',
+        'team' => 'Team',
+        'vehicles' => 'Vehicles',
+        'default' => 'General',
+    ],
+    'subjects' => [
+        'Business' => 'Store',
+        'Vehicle' => 'Vehicle',
+        'TimeEntry' => 'Shift',
+        'User' => 'User',
+        'Employee' => 'Employee',
+        'Sale' => 'Sale',
+        'Expense' => 'Expense',
+        'Payslip' => 'Payslip',
+        'ProductVariant' => 'Product',
+    ],
+];

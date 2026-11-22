@@ -82,6 +82,7 @@ trait ConfiguresPanel
             ])
             ->favicon(asset('favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('15.5rem')
             ->unsavedChangesAlerts()
             // Page-to-page navigation without full reloads. Routes that switch language,
             // identity or leave the panel still do a full load.

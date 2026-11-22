@@ -18,6 +18,8 @@
                     :placeholder="__('Scan a barcode or search by name / SKU')"
                     autofocus
                     autocomplete="off"
+                    {{-- Back to the scanner after each add, but don't pop the keyboard on touch screens. --}}
+                    x-on:pos-line-added.window="if (window.matchMedia('(pointer: fine)').matches) $el.focus()"
                     inputmode="search"
                 />
             </x-filament::input.wrapper>
@@ -68,7 +70,7 @@
         </div>
 
         {{-- The live receipt --}}
-        <aside class="yl-receipt flex flex-col p-5 lg:sticky lg:top-6">
+        <aside id="pos-cart" class="yl-receipt flex scroll-mt-4 flex-col p-5 lg:sticky lg:top-6">
             <div class="flex items-center justify-between gap-3">
                 <h2 class="text-base font-semibold text-gray-950 dark:text-white">{{ __('Current sale') }}</h2>
                 <div class="flex items-center gap-4">
@@ -153,4 +155,15 @@
             @endif
         </aside>
     </div>
+
+    {{-- Phone: the cart sits below the catalogue, so a sticky bar shows what's in it and jumps there. --}}
+    @if ($cart !== [])
+        <a href="#pos-cart" class="yl-pos-cartbar lg:hidden">
+            <span class="flex items-center gap-2">
+                <x-filament::icon icon="heroicon-o-shopping-bag" class="size-5" />
+                {{ trans_choice(':count item|:count items', count($cart)) }}
+            </span>
+            <span class="yl-figure font-semibold">{{ $this->money($totals['total']) }}</span>
+        </a>
+    @endif
 </x-filament-panels::page>

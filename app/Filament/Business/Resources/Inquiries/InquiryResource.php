@@ -5,6 +5,7 @@ namespace App\Filament\Business\Resources\Inquiries;
 use App\Enums\InquiryStatus;
 use App\Filament\Business\BusinessResource;
 use App\Models\Inquiry;
+use App\Support\Ltr;
 use App\Support\Permission;
 use BackedEnum;
 use Filament\Actions\ViewAction;
@@ -15,6 +16,7 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
@@ -56,9 +58,9 @@ class InquiryResource extends BusinessResource
 
     public static function infolist(Schema $schema): Schema
     {
-        return $schema->columns(3)->components([
+        return $schema->columns(2)->components([
             TextEntry::make('name')->label(__('Name')),
-            TextEntry::make('phone')->label(__('Phone'))->url(fn (Inquiry $record): string => 'tel:'.$record->phone),
+            TextEntry::make('phone')->label(__('Phone'))->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->url(fn (Inquiry $record): string => 'tel:'.$record->phone),
             TextEntry::make('email')->label(__('Email'))->placeholder('—'),
             TextEntry::make('type')->label(__('Type'))->badge()->color('gray'),
             TextEntry::make('vehicle')->label(__('Vehicle'))->state(fn (Inquiry $record): ?string => $record->vehicle?->displayName())->placeholder('—'),
@@ -74,7 +76,7 @@ class InquiryResource extends BusinessResource
             ->columns([
                 TextColumn::make('created_at')->label(__('Received'))->since()->sortable(),
                 TextColumn::make('name')->label(__('Name'))->searchable(),
-                TextColumn::make('phone')->label(__('Phone'))->searchable(),
+                TextColumn::make('phone')->label(__('Phone'))->searchable()->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state)),
                 TextColumn::make('type')->label(__('Type'))->badge()->color('gray'),
                 TextColumn::make('vehicle')->label(__('Vehicle'))->state(fn (Inquiry $record): ?string => $record->vehicle?->displayName())->placeholder('—'),
                 SelectColumn::make('status')->label(__('Status'))->options(InquiryStatus::class)->selectablePlaceholder(false),

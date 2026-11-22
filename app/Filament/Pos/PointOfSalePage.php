@@ -184,6 +184,7 @@ abstract class PointOfSalePage extends Page
         foreach ($this->cart as $key => $line) {
             if ($line['variant_id'] === $variant->id && $line['modifier_ids'] === $modifierIds && ! $variant->unit->allowsDecimalQuantity()) {
                 $this->cart[$key]['qty'] += $qty;
+                $this->dispatch('pos-line-added');
 
                 return;
             }
@@ -199,6 +200,8 @@ abstract class PointOfSalePage extends Page
             'modifier_delta_cents' => (int) $modifiers->sum('price_delta_cents'),
             'discount_cents' => 0,
         ];
+
+        $this->dispatch('pos-line-added');
     }
 
     public function qtyInCart(int $variantId): float

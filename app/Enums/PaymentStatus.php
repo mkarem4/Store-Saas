@@ -17,12 +17,12 @@ enum PaymentStatus: string implements HasColor, HasLabel
     public function label(): string
     {
         return match ($this) {
-            self::Pending => __('Pending'),
-            self::Authorized => __('Authorized'),
-            self::Captured => __('Captured'),
-            self::Voided => __('Voided'),
+            self::Pending => __('Awaiting payment'),
+            self::Authorized => __('Payment held'),
+            self::Captured => __('Paid'),
+            self::Voided => __('Hold released'),
             self::Refunded => __('Refunded'),
-            self::Failed => __('Failed'),
+            self::Failed => __('Payment failed'),
         };
     }
 

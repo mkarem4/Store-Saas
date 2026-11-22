@@ -4,6 +4,7 @@ namespace App\Filament\Business\Resources\Clients;
 
 use App\Filament\Business\BusinessResource;
 use App\Models\Client;
+use App\Support\Ltr;
 use App\Support\Permission;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -14,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
@@ -70,7 +72,7 @@ class ClientResource extends BusinessResource
     {
         return $table->defaultSort('created_at', 'desc')->columns([
             TextColumn::make('name')->label(__('Name'))->searchable(),
-            TextColumn::make('phone')->label(__('Phone'))->searchable(),
+            TextColumn::make('phone')->label(__('Phone'))->searchable()->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state)),
             TextColumn::make('id_number')->label(__('ID number'))->searchable()->toggleable(),
             TextColumn::make('license_number')->label(__('License #'))->toggleable(),
             TextColumn::make('created_at')->label(__('Added'))->date()->sortable(),

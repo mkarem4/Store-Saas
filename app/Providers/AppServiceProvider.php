@@ -6,6 +6,7 @@ use App\Contracts\DistanceCalculator;
 use App\Contracts\GoldPriceProvider;
 use App\Contracts\PaymentGateway;
 use App\Contracts\PushNotifier;
+use App\Filament\Support\TableEmptyState;
 use App\Models\User;
 use App\Services\Geo\GoogleDistanceCalculator;
 use App\Services\Geo\HaversineDistanceCalculator;
@@ -15,6 +16,7 @@ use App\Services\Payments\StripeGateway;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\LogPushNotifier;
 use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
@@ -95,8 +97,11 @@ class AppServiceProvider extends ServiceProvider
         // ("Return items", "Reject"). Filament's Create/Save/Delete set their own in setUp().
         Action::configureUsing(fn (Action $action) => $action->modalSubmitActionLabel(fn (Action $action): string => (string) $action->getLabel()));
 
+        // Viewing a record from a list opens a side drawer, so the list stays in place.
+        ViewAction::configureUsing(fn (ViewAction $action) => $action->slideOver());
+
         // Lists keep their search, filters and sort when you come back from a record.
-        Table::configureUsing(fn (Table $table) => $table
+        Table::configureUsing(fn (Table $table) => TableEmptyState::apply($table)
             ->persistFiltersInSession()
             ->persistSearchInSession()
             ->persistSortInSession());

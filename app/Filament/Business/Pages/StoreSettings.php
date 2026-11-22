@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
@@ -28,6 +29,9 @@ use UnitEnum;
  */
 class StoreSettings extends SettingsPage
 {
+    // Settings read best at a comfortable width, not stretched across a wide screen.
+    protected Width|string|null $maxContentWidth = Width::FiveExtraLarge;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected static string|UnitEnum|null $navigationGroup = 'Settings';
@@ -132,7 +136,7 @@ class StoreSettings extends SettingsPage
         $gpsMode = fn (Get $get): bool => in_array(($get('attendance_mode') instanceof AttendanceMode ? $get('attendance_mode') : AttendanceMode::tryFrom((string) $get('attendance_mode'))), [AttendanceMode::Gps, AttendanceMode::Both, AttendanceMode::Either], true);
 
         return $schema->components([
-            Section::make(__('App orders'))->columns(3)->visible($sellsInApp)->schema([
+            Section::make(__('App orders'))->aside()->description(__('How customers order from you in the app.'))->columns(2)->visible($sellsInApp)->schema([
                 Toggle::make('pickup_enabled')->label(__('Pickup')),
                 Toggle::make('delivery_enabled')->label(__('Delivery'))->live(),
                 Toggle::make('orders_paused')->label(__('Pause new orders')),
@@ -140,14 +144,14 @@ class StoreSettings extends SettingsPage
                 TextInput::make('accept_timeout_minutes')->label(__('Minutes to accept an order'))->integer()->minValue(2)->maxValue(60)->required()
                     ->helperText(__('Unaccepted orders expire and the card hold is released.')),
             ]),
-            Section::make(__('Delivery fee by distance'))->columns(3)->visible(fn (Get $get): bool => $sellsInApp && (bool) $get('delivery_enabled'))->schema([
+            Section::make(__('Delivery fee by distance'))->aside()->description(__('A base fee plus a price for each kilometre from the store.'))->columns(2)->visible(fn (Get $get): bool => $sellsInApp && (bool) $get('delivery_enabled'))->schema([
                 MoneyInput::make('delivery_base_fee_cents')->label(__('Base fee')),
                 MoneyInput::make('delivery_fee_per_km_cents')->label(__('Price per km'))->required(),
                 TextInput::make('delivery_max_km')->label(__('Maximum distance'))->numeric()->minValue(0)->suffix('km')
                     ->helperText(__('0 = no limit.')),
             ]),
-            Section::make(__('Opening hours'))->visible($sellsInApp)->schema(array_map(
-                fn (string $day, string $label) => Grid::make(4)->schema([
+            Section::make(__('Opening hours'))->aside()->description(__('The app only takes orders while you are open.'))->visible($sellsInApp)->schema(array_map(
+                fn (string $day, string $label) => Grid::make(['default' => 1, 'sm' => 3])->schema([
                     Toggle::make("working_hours.{$day}.open_day")->label($label)->inline(false)->live(),
                     TimePicker::make("working_hours.{$day}.open")->label(__('Opens'))->seconds(false)->visible(fn (Get $get): bool => (bool) $get("working_hours.{$day}.open_day")),
                     TimePicker::make("working_hours.{$day}.close")->label(__('Closes'))->seconds(false)->visible(fn (Get $get): bool => (bool) $get("working_hours.{$day}.open_day")),
@@ -155,7 +159,7 @@ class StoreSettings extends SettingsPage
                 array_keys($days),
                 $days,
             )),
-            Section::make(__('Store location'))->columns(2)
+            Section::make(__('Store location'))->aside()->columns(2)
                 ->description(__('Used to compute delivery distance and for the attendance geofence.'))
                 ->headerActions([
                     Action::make('locate')->label(__('Use my current location'))->icon(Heroicon::OutlinedMapPin)->color('gray')
@@ -165,7 +169,7 @@ class StoreSettings extends SettingsPage
                     TextInput::make('latitude')->label(__('Latitude'))->numeric()->minValue(-90)->maxValue(90),
                     TextInput::make('longitude')->label(__('Longitude'))->numeric()->minValue(-180)->maxValue(180),
                 ]),
-            Section::make(__('Attendance'))->columns(3)
+            Section::make(__('Attendance'))->aside()->columns(1)
                 ->description(__('Staff can only clock in from inside the store.'))
                 ->schema([
                     Select::make('attendance_mode')->label(__('Check'))->options(AttendanceMode::class)->required()->live(),
@@ -176,10 +180,10 @@ class StoreSettings extends SettingsPage
                         })),
                     TextInput::make('geofence_radius_m')->label(__('Allowed radius'))->integer()->minValue(10)->maxValue(5000)->suffix('m')->visible($gpsMode),
                 ]),
-            Section::make(__('Inventory'))->visible(! in_array($type, ['car_showroom', 'car_rental', 'restaurant'], true))->schema([
+            Section::make(__('Inventory'))->aside()->description(__('What happens when an item runs out.'))->visible(! in_array($type, ['car_showroom', 'car_rental', 'restaurant'], true))->schema([
                 Toggle::make('allow_negative_stock')->label(__('Allow selling below zero stock')),
             ]),
-            Section::make(__('Gold price'))->visible($type === 'jewelry')->schema([
+            Section::make(__('Gold price'))->aside()->description(__('Where today\'s gold price comes from.'))->visible($type === 'jewelry')->schema([
                 Toggle::make('gold_auto_price')->label(__('Update gold prices automatically')),
             ]),
         ]);

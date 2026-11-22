@@ -5,6 +5,7 @@ use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use App\Filament\Business\Pages\PointOfSale;
 use App\Filament\Business\Pages\StoreSettings;
+use App\Filament\Business\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Business\Resources\Employees\Pages\CreateEmployee;
 use App\Filament\Business\Resources\Orders\Pages\ListOrders;
 use App\Filament\Business\Resources\Products\Pages\CreateProduct;
@@ -160,7 +161,11 @@ it('accepts and completes an app order from the orders screen (scenario 10)', fu
 
     expect($order->refresh()->status)->toBe(OrderStatus::Accepted);
 
-    $page->callAction(TestAction::make('prepare')->table($order))
+    // Accepted orders leave "Needs action" and move to "In progress".
+    $page->assertCanNotSeeTableRecords([$order])
+        ->set('activeTab', 'in_progress')
+        ->assertCanSeeTableRecords([$order])
+        ->callAction(TestAction::make('prepare')->table($order))
         ->callAction(TestAction::make('ready')->table($order))
         ->callAction(TestAction::make('complete')->table($order));
 
@@ -256,4 +261,14 @@ it('lets staff clock in and sell, but hides costs and refunds', function (): voi
 
     // Staff cannot reach owner screens (rule 6).
     $this->get(SaleResource::getUrl('index', ['tenant' => $business], panel: 'business'))->assertForbidden();
+});
+
+it('tells an empty list apart from a search with no results', function (): void {
+    storeOwner('grocery');
+
+    Livewire::test(ManageCategories::class)
+        ->assertSee(__('filament-tables::table.empty.heading', ['model' => __('Categories')]))
+        ->set('tableSearch', 'no-such-category')
+        ->assertSee(__('No matches'))
+        ->assertSee(__('Clear search and filters'));
 });

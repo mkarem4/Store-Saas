@@ -4,6 +4,7 @@ namespace App\Filament\Business\Resources\Suppliers;
 
 use App\Filament\Business\BusinessResource;
 use App\Models\Supplier;
+use App\Support\Ltr;
 use App\Support\Permission;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -14,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class SupplierResource extends BusinessResource
@@ -60,7 +62,7 @@ class SupplierResource extends BusinessResource
     {
         return $table->columns([
             TextColumn::make('name')->label(__('Name'))->searchable(),
-            TextColumn::make('phone')->label(__('Phone'))->searchable(),
+            TextColumn::make('phone')->label(__('Phone'))->searchable()->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state)),
             TextColumn::make('email')->label(__('Email')),
         ])->recordActions([EditAction::make(), DeleteAction::make()]);
     }

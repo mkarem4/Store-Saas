@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -62,30 +63,41 @@ class ProductResource extends BusinessResource
     {
         $type = BusinessPanel::business()?->businessType;
         $isRestaurant = $type?->key === 'restaurant';
-        $typeFields = TypeFields::components($type);
+        // Type fields that duplicate real product columns (prep time, availability, add-ons) are left out.
+        $typeFields = TypeFields::components($type, except: ['prep_time_minutes', 'is_available', 'modifiers', 'has_modifiers', 'is_published', 'track_stock']);
 
-        return $schema->columns(3)->components([
-            Section::make(__('Details'))->columnSpan(2)->columns(2)->schema([
-                Fields::translatable('name', __('Name')),
-                Fields::translatable('description', __('Description'), required: false, textarea: true),
-                Select::make('category_id')->label(__('Category'))
-                    ->options(fn (): array => Category::query()->orderBy('sort_order')->get()->mapWithKeys(fn (Category $category): array => [$category->id => $category->translatedName()])->all())
-                    ->searchable(),
-                TextInput::make('prep_time_minutes')->label(__('Preparation time (min)'))->integer()->minValue(0)->visible($isRestaurant),
-                SpatieMediaLibraryFileUpload::make('images')->label(__('Images'))->collection('images')->multiple()->reorderable()->image()->maxFiles(8)->columnSpanFull(),
-            ]),
-            Section::make(__('Visibility'))->columnSpan(1)->schema([
-                Toggle::make('is_published')->label(__('Shown in the app'))->default(true),
-                Toggle::make('is_available')->label(__('Available'))->default(true)
-                    ->helperText($isRestaurant ? __('Turn off when the dish runs out.') : null),
-                Toggle::make('track_stock')->label(__('Track stock'))->default(! $isRestaurant)->visible(! $isRestaurant),
-                Toggle::make('has_modifiers')->label(__('Has options / add-ons'))->visible($isRestaurant),
-            ]),
-            Section::make(__('Store-type fields'))->columnSpan(2)->columns(2)->schema($typeFields)->visible($typeFields !== []),
-            Section::make(__('Price & stock'))->columnSpan(2)
-                ->visibleOn('create')
-                ->statePath('variant')
-                ->schema(VariantForm::components(creating: true)),
+        // Polaris-style: what the product is on the main side, status and organisation beside it.
+        return $schema->columns(['default' => 1, 'lg' => 3])->components([
+            Group::make([
+                Section::make(__('Details'))->columns(2)->schema([
+                    Fields::translatable('name', __('Name')),
+                    Fields::translatable('description', __('Description'), required: false, textarea: true),
+                ]),
+                Section::make(__('Media'))->schema([
+                    SpatieMediaLibraryFileUpload::make('images')->hiddenLabel()->collection('images')->multiple()->reorderable()->image()->maxFiles(8)
+                        ->helperText(__('Up to 8 photos. The first one is shown in lists and the app.')),
+                ]),
+                Section::make(__('Price & stock'))
+                    ->visibleOn('create')
+                    ->statePath('variant')
+                    ->schema(VariantForm::components(creating: true)),
+                Section::make(__('Specifications'))->columns(2)->schema($typeFields)->visible($typeFields !== []),
+            ])->columnSpan(['lg' => 2]),
+            Group::make([
+                Section::make(__('Status'))->schema([
+                    Toggle::make('is_published')->label(__('Shown in the app'))->default(true),
+                    Toggle::make('is_available')->label(__('Available'))->default(true)
+                        ->helperText($isRestaurant ? __('Turn off when the dish runs out.') : null),
+                    Toggle::make('track_stock')->label(__('Track stock'))->default(! $isRestaurant)->visible(! $isRestaurant),
+                    Toggle::make('has_modifiers')->label(__('Has options / add-ons'))->visible($isRestaurant),
+                ]),
+                Section::make(__('Organisation'))->schema([
+                    Select::make('category_id')->label(__('Category'))
+                        ->options(fn (): array => Category::query()->orderBy('sort_order')->get()->mapWithKeys(fn (Category $category): array => [$category->id => $category->translatedName()])->all())
+                        ->searchable(),
+                    TextInput::make('prep_time_minutes')->label(__('Preparation time (min)'))->integer()->minValue(0)->visible($isRestaurant),
+                ]),
+            ])->columnSpan(['lg' => 1]),
         ]);
     }
 

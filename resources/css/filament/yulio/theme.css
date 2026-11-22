@@ -189,6 +189,44 @@
     }
 }
 
+/* Controls: 40px fields and buttons, 8px corners; touch targets stay at 44px on phones */
+.fi-input-wrp {
+    min-height: 2.5rem;
+}
+
+.fi-btn:not(.fi-size-xs):not(.fi-size-sm) {
+    min-height: 2.5rem;
+}
+
+@media (pointer: coarse) {
+    .fi-btn:not(.fi-size-xs),
+    .fi-input-wrp {
+        min-height: 2.75rem;
+    }
+}
+
+/* Arabic reads better a step larger in dense places */
+[dir='rtl'] .fi-ta-text-item,
+[dir='rtl'] .fi-sidebar-item-label,
+[dir='rtl'] .fi-input,
+[dir='rtl'] .fi-in-text-item {
+    font-size: 0.9375rem;
+}
+
+/* Forms keep a comfortable width instead of stretching three fields across a wide screen */
+.fi-resource-create-record-page .fi-page-main,
+.fi-resource-edit-record-page .fi-page-main {
+    max-width: 65rem;
+}
+
+/* Store and staff panels: in dark mode the ink accent turns light with dark text */
+.dark .fi-body:not(.fi-panel-admin) .fi-btn.fi-color-primary {
+    --dark-bg: var(--color-blue-300);
+    --dark-text: var(--color-blue-950);
+    --dark-hover-bg: var(--color-blue-200);
+    --dark-hover-text: var(--color-blue-950);
+}
+
 /* Motion: colour and shadow only, never layout, on the things people touch */
 .fi-btn,
 .fi-icon-btn,
@@ -210,6 +248,15 @@
 .fi-sidebar-group-collapse-btn,
 .fi-section-collapse-btn {
     transition: transform var(--yl-duration-base) var(--yl-ease);
+}
+
+/* Filament disables desktop sidebar transitions. Animate its width so the
+ * adjacent flex content resizes with it instead of jumping between widths.
+ * Keep this separate from the mobile drawer's transform transition. */
+@media (min-width: 64rem) {
+    .fi-body-has-sidebar-collapsible-on-desktop:not(.fi-body-has-top-navigation) .fi-sidebar {
+        transition: width var(--yl-duration-slow) var(--yl-ease);
+    }
 }
 
 /* Mobile sidebar slides in on the reading side and leaves a little faster */
@@ -262,6 +309,11 @@
 
     .dark .yl-tear {
         background-image: linear-gradient(to right, var(--color-gray-700) 50%, transparent 0);
+    }
+
+    /* POS on phones: the cart summary bar stays above the fold edge */
+    .yl-pos-cartbar {
+        @apply sticky bottom-3 z-10 mt-4 flex min-h-12 items-center justify-between gap-3 rounded-xl bg-primary-600 px-4 text-sm font-medium text-white shadow-lg dark:bg-primary-300 dark:text-primary-950;
     }
 
     .yl-tile {

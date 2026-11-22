@@ -92,7 +92,7 @@ class BusinessResource extends Resource
             ]),
             Section::make(__('Store owner account'))
                 ->columnSpanFull()
-                ->description(__('The owner signs in at /business with this email and the temporary password, then sets their own.'))
+                ->description(__('The owner signs in to the store dashboard with this email and the temporary password, then chooses their own.'))
                 ->columns(3)
                 ->visibleOn('create')
                 ->schema([

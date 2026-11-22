@@ -16,9 +16,10 @@ use Filament\Schemas\Components\Component;
 final class TypeFields
 {
     /**
+     * @param  array<int, string>  $except  keys the form already has as real fields
      * @return array<int, Component>
      */
-    public static function components(?BusinessType $type, string $statePath = 'attributes'): array
+    public static function components(?BusinessType $type, string $statePath = 'attributes', array $except = []): array
     {
         $locale = app()->getLocale();
         $components = [];
@@ -26,7 +27,7 @@ final class TypeFields
         foreach ($type?->fields ?? [] as $field) {
             $key = (string) ($field['key'] ?? '');
 
-            if ($key === '') {
+            if ($key === '' || in_array($key, $except, true)) {
                 continue;
             }
 
