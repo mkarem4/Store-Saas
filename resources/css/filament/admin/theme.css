@@ -1,0 +1,172 @@
+@import '../yulio/theme.css';
+
+/*
+ * Yulio platform console — the owner's desk above all stores.
+ * Store panels are a light shop counter (warm stone, ink blue, IBM Plex);
+ * the console is cool slate, cleared-ledger teal and Readex Pro, framed by a
+ * dark rail so it is never mistaken for a store. The rail is the one bold
+ * element; the working area stays light and quiet.
+ */
+@theme {
+    --font-figures: 'Readex Pro', ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Rail rules sit outside the cascade layers on purpose: unlayered CSS wins
+ * over Filament's component styles and utilities, which assume a light sidebar.
+ */
+
+/* The rail: dark in both themes, full height (the panel has no topbar). */
+.fi-sidebar {
+    --yl-rail: var(--color-gray-900);
+    color-scheme: dark;
+
+    @apply bg-(--yl-rail) lg:bg-(--yl-rail) dark:bg-(--yl-rail) dark:lg:bg-(--yl-rail);
+}
+
+.dark .fi-sidebar {
+    --yl-rail: color-mix(in oklab, var(--color-gray-900) 70%, var(--color-gray-950));
+    @apply lg:border-e lg:border-white/5;
+}
+
+.fi-sidebar .fi-sidebar-header {
+    @apply bg-transparent ring-0 shadow-none;
+}
+
+.fi-sidebar .fi-logo {
+    @apply text-lg font-semibold tracking-normal text-white;
+}
+
+.fi-sidebar .fi-sidebar-header-controls {
+    @apply after:border-white/10;
+}
+
+.fi-sidebar .fi-icon-btn {
+    @apply text-gray-400 hover:text-white focus-visible:text-white;
+}
+
+.fi-sidebar .fi-sidebar-nav {
+    @apply gap-y-6 py-6;
+}
+
+.fi-sidebar .fi-sidebar-nav-groups {
+    @apply gap-y-6;
+}
+
+/* Group labels: quiet, closer to their own items than to the group above. */
+.fi-sidebar .fi-sidebar-group-label {
+    @apply text-xs font-medium text-gray-400;
+}
+
+.fi-sidebar .fi-sidebar-group-btn {
+    @apply py-1;
+
+    & .fi-icon {
+        @apply text-gray-500;
+    }
+}
+
+.fi-sidebar .fi-sidebar-group-items {
+    @apply gap-y-0.5;
+}
+
+.fi-sidebar .fi-sidebar-item-btn,
+.fi-sidebar .fi-sidebar-group-dropdown-trigger-btn,
+.fi-sidebar .fi-sidebar-database-notifications-btn,
+.fi-sidebar .fi-user-menu-trigger {
+    @apply hover:bg-white/5 focus-visible:bg-white/5 focus-visible:ring-2 focus-visible:ring-primary-400/60;
+
+    & > .fi-icon {
+        @apply text-gray-400;
+    }
+}
+
+.fi-sidebar .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-database-notifications-btn-label {
+    @apply text-gray-300;
+}
+
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn {
+    @apply hover:bg-white/5 focus-visible:bg-white/5 dark:hover:bg-white/5;
+}
+
+/* Active: a lifted step of the rail and a teal mark on the reading edge. */
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    @apply bg-white/10 dark:bg-white/10;
+
+    &::before {
+        content: '';
+        @apply absolute inset-y-2 start-0 w-0.5 rounded-full bg-primary-300;
+    }
+
+    & > .fi-icon {
+        @apply text-primary-300 dark:text-primary-300;
+    }
+
+    & > .fi-sidebar-item-label {
+        @apply text-white dark:text-white;
+    }
+}
+
+.fi-sidebar .fi-sidebar-item-grouped-border-part {
+    @apply bg-gray-500;
+}
+
+.fi-sidebar .fi-sidebar-footer {
+    @apply border-white/10;
+}
+
+.fi-sidebar .fi-user-menu-trigger-text {
+    @apply text-white;
+}
+
+.fi-sidebar .fi-user-menu-trigger-text > :last-child {
+    @apply text-gray-400;
+}
+
+/* Locale switch sits in the rail's footer. */
+.fi-sidebar .yl-locale a {
+    @apply text-gray-400 hover:text-white;
+}
+
+.fi-sidebar .yl-locale a.yl-locale-active {
+    @apply bg-white/10 text-white;
+}
+
+.fi-sidebar-close-overlay {
+    @apply bg-gray-950/60;
+}
+
+
+/* Global search sits at the top of the rail. */
+.fi-sidebar .fi-input-wrp {
+    @apply bg-white/5 ring-white/10 dark:bg-white/5;
+
+    &:focus-within {
+        @apply ring-2 ring-primary-400;
+    }
+
+    & .fi-input {
+        @apply text-white placeholder:text-gray-400;
+    }
+
+    & .fi-icon {
+        @apply text-gray-400;
+    }
+}
+
+.fi-sidebar .fi-sidebar-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+}
+
+@layer components {
+    /* Working area: headings carry the console's typeface at a calmer weight. */
+    .fi-header-heading {
+        @apply font-semibold tracking-normal;
+    }
+
+    .fi-wi-stats-overview-stat-value {
+        @apply font-medium;
+    }
+}

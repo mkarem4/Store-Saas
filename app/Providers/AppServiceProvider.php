@@ -14,7 +14,10 @@ use App\Services\Payments\FakeGateway;
 use App\Services\Payments\StripeGateway;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\LogPushNotifier;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
@@ -68,6 +71,11 @@ class AppServiceProvider extends ServiceProvider
         // Money and counts read the same in Arabic and English: western digits, "$1,234.50".
         Table::configureUsing(fn (Table $table) => $table->defaultNumberLocale('en_US'));
         Schema::configureUsing(fn (Schema $schema) => $schema->defaultNumberLocale('en_US'));
+
+        // One look for every picker: Filament's own dropdowns and calendars, never the browser's.
+        Select::configureUsing(fn (Select $select) => $select->native(false));
+        SelectFilter::configureUsing(fn (SelectFilter $filter) => $filter->native(false));
+        DateTimePicker::configureUsing(fn (DateTimePicker $picker) => $picker->native(false));
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');

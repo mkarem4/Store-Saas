@@ -111,11 +111,11 @@ class BusinessResource extends Resource
             ->columns([
                 SpatieMediaLibraryImageColumn::make('logo')->collection('logo')->circular()->label(''),
                 TextColumn::make('name')->label(__('Store'))
-                    ->formatStateUsing(fn (Business $record): string => $record->translatedName())
+                    ->state(fn (Business $record): string => $record->translatedName())
                     ->description(fn (Business $record): string => $record->slug)
                     ->searchable(query: fn (Builder $query, string $search) => $query->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%")),
                 TextColumn::make('businessType.name')->label(__('Type'))
-                    ->formatStateUsing(fn (Business $record): string => (string) $record->businessType?->translatedName())->badge()->color('gray'),
+                    ->state(fn (Business $record): string => (string) $record->businessType?->translatedName())->badge()->color('gray'),
                 TextColumn::make('state')->label(__('Region'))->formatStateUsing(fn (Business $record): string => trim($record->city.', '.$record->state.' '.$record->country, ', ')),
                 TextColumn::make('tax')->label(__('Tax'))->state(fn (Business $record): string => rtrim(rtrim(number_format($record->taxRate(), 3), '0'), '.').'%'),
                 TextColumn::make('owner.email')->label(__('Owner'))->searchable(),

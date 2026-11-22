@@ -67,7 +67,7 @@ class CategoryResource extends BusinessResource
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->columns([
-                TextColumn::make('name')->label(__('Name'))->formatStateUsing(fn (Category $record): string => $record->translatedName())
+                TextColumn::make('name')->label(__('Name'))->state(fn (Category $record): string => $record->translatedName())
                     ->searchable(query: fn ($query, string $search) => $query->where('name', 'like', "%{$search}%")),
                 TextColumn::make('products_count')->label(__('Products'))->counts('products'),
                 ToggleColumn::make('is_active')->label(__('Active')),

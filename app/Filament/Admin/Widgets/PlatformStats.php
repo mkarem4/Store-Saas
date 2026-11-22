@@ -30,6 +30,7 @@ class PlatformStats extends StatsOverviewWidget
             ->sum('amount_cents');
 
         $openPayouts = PayoutRequest::query()->withoutGlobalScope('business')->whereIn('status', [PayoutStatus::Requested, PayoutStatus::Approved]);
+        $openCount = (clone $openPayouts)->count();
 
         return [
             Stat::make(__('Active stores'), Business::query()->where('status', BusinessStatus::Active)->count())
@@ -38,9 +39,9 @@ class PlatformStats extends StatsOverviewWidget
                 ->where('status', OrderStatus::Completed)->count()),
             Stat::make(__('Store sales this month'), Money::format($sales)),
             Stat::make(__('Commission this month'), Money::format($commission)),
-            Stat::make(__('Open payout requests'), (clone $openPayouts)->count())
+            Stat::make(__('Open payout requests'), $openCount)
                 ->description(Money::format((int) (clone $openPayouts)->sum('amount_cents')))
-                ->color('warning'),
+                ->color($openCount > 0 ? 'warning' : 'gray'),
         ];
     }
 }

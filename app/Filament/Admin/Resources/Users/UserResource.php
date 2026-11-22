@@ -79,7 +79,7 @@ class UserResource extends Resource
                 TextColumn::make('name')->label(__('Name'))->searchable()->description(fn (User $record): string => $record->email),
                 TextColumn::make('role')->label(__('Role'))->badge(),
                 TextColumn::make('business.slug')->label(__('Store'))
-                    ->formatStateUsing(fn (User $record): string => (string) $record->business?->translatedName())->placeholder('—'),
+                    ->state(fn (User $record): string => (string) $record->business?->translatedName())->placeholder('—'),
                 TextColumn::make('last_login_at')->label(__('Last sign-in'))->since()->placeholder(__('Never')),
                 ToggleColumn::make('is_active')->label(__('Active'))
                     ->disabled(fn (User $record): bool => $record->is(auth()->user())),

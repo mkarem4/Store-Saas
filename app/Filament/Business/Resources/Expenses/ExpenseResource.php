@@ -102,7 +102,7 @@ class ExpenseResource extends BusinessResource
             ->modifyQueryUsing(fn (Builder $query) => $query->with('category'))
             ->columns([
                 TextColumn::make('expense_date')->label(__('Date'))->date()->sortable(),
-                TextColumn::make('category.name')->label(__('Category'))->formatStateUsing(fn (Expense $record): string => (string) $record->category?->translatedName())->badge()->color('gray'),
+                TextColumn::make('category.name')->label(__('Category'))->state(fn (Expense $record): string => (string) $record->category?->translatedName())->badge()->color('gray'),
                 TextColumn::make('description')->label(__('Description'))->searchable()->limit(50),
                 TextColumn::make('amount_cents')->label(__('Amount'))->money($currency, divideBy: 100)->sortable()
                     ->summarize(Sum::make()->money($currency, divideBy: 100)),

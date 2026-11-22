@@ -74,22 +74,43 @@ class BusinessProvisioner
 
     private function createRoles(Business $business, User $owner): void
     {
+        $this->syncRoles($business);
+
+        $this->withTeam($business, fn () => $owner->syncRoles(['business_owner']));
+    }
+
+    /**
+     * Brings a store's roles up to date with the permissions defined in code:
+     * the owner role always holds every store permission, and the staff role is
+     * created with its defaults the first time (later edits by the owner stay).
+     */
+    public function syncRoles(Business $business): void
+    {
+        foreach (Permission::all() as $permission) {
+            \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+        }
+
+        $this->withTeam($business, function (): void {
+            Role::findOrCreate('business_owner', 'web')->syncPermissions(Permission::businessOwner());
+
+            $staffRole = Role::findOrCreate('staff', 'web');
+
+            if ($staffRole->wasRecentlyCreated) {
+                $staffRole->syncPermissions(Permission::staff());
+            }
+        });
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    private function withTeam(Business $business, \Closure $callback): void
+    {
         $registrar = app(PermissionRegistrar::class);
         $previousTeam = $registrar->getPermissionsTeamId();
         $registrar->setPermissionsTeamId($business->id);
 
         try {
-            foreach (Permission::all() as $permission) {
-                \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
-            }
-
-            $ownerRole = Role::findOrCreate('business_owner', 'web');
-            $ownerRole->syncPermissions(Permission::businessOwner());
-
-            $staffRole = Role::findOrCreate('staff', 'web');
-            $staffRole->syncPermissions(Permission::staff());
-
-            $owner->syncRoles([$ownerRole]);
+            $callback();
         } finally {
             $registrar->setPermissionsTeamId($previousTeam);
         }

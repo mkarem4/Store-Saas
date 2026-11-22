@@ -63,7 +63,7 @@ class PayoutRequestResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->columns(3)->components([
-            TextEntry::make('business.name')->label(__('Store'))->formatStateUsing(fn (PayoutRequest $record): string => $record->business->translatedName()),
+            TextEntry::make('business.name')->label(__('Store'))->state(fn (PayoutRequest $record): string => $record->business->translatedName()),
             TextEntry::make('amount_cents')->label(__('Amount'))->money('USD', divideBy: 100),
             TextEntry::make('status')->label(__('Status'))->badge(),
             TextEntry::make('created_at')->label(__('Requested'))->dateTime(),
@@ -86,7 +86,7 @@ class PayoutRequestResource extends Resource
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
                 TextColumn::make('business.name')->label(__('Store'))
-                    ->formatStateUsing(fn (PayoutRequest $record): string => $record->business->translatedName())
+                    ->state(fn (PayoutRequest $record): string => $record->business->translatedName())
                     ->searchable(),
                 TextColumn::make('amount_cents')->label(__('Amount'))->money('USD', divideBy: 100)->sortable(),
                 TextColumn::make('method_snapshot.summary')->label(__('Method'))->placeholder('—'),

@@ -112,7 +112,7 @@ class DemoSeeder extends Seeder
                     'ar' => "محل تجريبي من نوع {$type->translatedName('ar')} للـPilot.",
                 ],
                 'phone' => '+1 (555) 010-'.str_pad((string) $type->id, 4, '0', STR_PAD_LEFT),
-                'email' => "hello@{$type->key}.test",
+                'email' => "hello@{$this->domain($type)}",
                 'address_line' => '120 Main Street',
                 'city' => 'Austin',
                 'state' => 'TX',
@@ -151,7 +151,7 @@ class DemoSeeder extends Seeder
         $staffRole->syncPermissions(Permission::staff());
 
         $owner = User::query()->updateOrCreate(
-            ['email' => "owner@{$type->key}.test"],
+            ['email' => "owner@{$this->domain($type)}"],
             [
                 'business_id' => $business->id,
                 'name' => $business->translated('name', 'en').' Owner',
@@ -164,7 +164,7 @@ class DemoSeeder extends Seeder
         $owner->syncRoles([$ownerRole]);
 
         $staff = User::query()->updateOrCreate(
-            ['email' => "staff@{$type->key}.test"],
+            ['email' => "staff@{$this->domain($type)}"],
             [
                 'business_id' => $business->id,
                 'name' => $business->translated('name', 'en').' Staff',
@@ -192,7 +192,7 @@ class DemoSeeder extends Seeder
         );
 
         Employee::query()->updateOrCreate(
-            ['business_id' => $business->id, 'email' => "manager@{$type->key}.test"],
+            ['business_id' => $business->id, 'email' => "manager@{$this->domain($type)}"],
             [
                 'name' => 'Store Manager',
                 'position' => 'Manager',
@@ -571,5 +571,11 @@ class DemoSeeder extends Seeder
             'changed_by_type' => Customer::class,
             'changed_by_id' => $customer->id,
         ]);
+    }
+
+    /** Email domains can't contain underscores, so "car_showroom" becomes "car-showroom.test". */
+    private function domain(BusinessType $type): string
+    {
+        return str_replace('_', '-', $type->key).'.test';
     }
 }

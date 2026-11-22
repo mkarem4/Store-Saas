@@ -70,7 +70,7 @@ class ModifierGroupsRelationManager extends RelationManager
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
-                TextColumn::make('name')->label(__('Group'))->formatStateUsing(fn (ModifierGroup $record): string => $record->translatedName()),
+                TextColumn::make('name')->label(__('Group'))->state(fn (ModifierGroup $record): string => $record->translatedName()),
                 TextColumn::make('modifiers_count')->label(__('Options'))->counts('modifiers'),
                 TextColumn::make('selections')->label(__('Choices'))->state(fn (ModifierGroup $record): string => $record->min_selections.'–'.$record->max_selections),
                 IconColumn::make('is_required')->label(__('Required'))->boolean(),

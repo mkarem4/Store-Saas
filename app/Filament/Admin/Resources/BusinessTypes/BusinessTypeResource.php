@@ -95,7 +95,7 @@ class BusinessTypeResource extends Resource
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
             ->columns([
-                TextColumn::make('name')->label(__('Name'))->formatStateUsing(fn (BusinessType $record): string => $record->translatedName()),
+                TextColumn::make('name')->label(__('Name'))->state(fn (BusinessType $record): string => $record->translatedName()),
                 TextColumn::make('key')->label(__('Key'))->badge()->color('gray'),
                 TextColumn::make('fields')->label(__('Fields'))->state(fn (BusinessType $record): int => count($record->fields ?? [])),
                 TextColumn::make('businesses_count')->label(__('Stores'))->counts('businesses'),

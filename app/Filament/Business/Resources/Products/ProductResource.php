@@ -99,12 +99,12 @@ class ProductResource extends BusinessResource
             ->columns([
                 SpatieMediaLibraryImageColumn::make('images')->collection('images')->limit(1)->label('')->square(),
                 TextColumn::make('name')->label(__('Name'))
-                    ->formatStateUsing(fn (Product $record): string => $record->translatedName())
+                    ->state(fn (Product $record): string => $record->translatedName())
                     ->description(fn (Product $record): string => (string) $record->variants->first()?->sku)
                     ->searchable(query: fn (Builder $query, string $search) => $query->where(fn (Builder $q) => $q
                         ->where('name', 'like', "%{$search}%")
                         ->orWhereHas('variants', fn (Builder $v) => $v->where('sku', 'like', "%{$search}%")->orWhere('barcode', $search)))),
-                TextColumn::make('category.name')->label(__('Category'))->formatStateUsing(fn (Product $record): string => (string) $record->category?->translatedName())->toggleable(),
+                TextColumn::make('category.name')->label(__('Category'))->state(fn (Product $record): string => (string) $record->category?->translatedName())->toggleable(),
                 TextColumn::make('price')->label(__('Price'))
                     ->state(fn (Product $record): ?int => $record->variants->first()?->retail_price_cents)
                     ->money(BusinessPanel::currency(), divideBy: 100),

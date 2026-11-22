@@ -38,6 +38,23 @@ trait ConfiguresPanel
         ];
     }
 
+    /**
+     * Cleared-ledger teal for the platform console, with #0F766E (teal-700)
+     * as the 600 shade so white button text keeps 5.4:1 contrast.
+     *
+     * @return array<int, string>
+     */
+    protected static function tealPalette(): array
+    {
+        $teal = Color::Teal;
+
+        return [
+            50 => $teal[50], 100 => $teal[100], 200 => $teal[200], 300 => $teal[300],
+            400 => $teal[400], 500 => $teal[600], 600 => $teal[700], 700 => $teal[800],
+            800 => $teal[900], 900 => $teal[950], 950 => $teal[950],
+        ];
+    }
+
     protected function base(Panel $panel, string $id): Panel
     {
         $namespace = ucfirst($id);
