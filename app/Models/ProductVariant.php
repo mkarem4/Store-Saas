@@ -116,6 +116,6 @@ class ProductVariant extends Model
             return $product;
         }
 
-        return $product === '' ? $variant : "{$product} · {$variant}";
+        return $product === '' ? $variant : "{$product} ({$variant})";
     }
 }

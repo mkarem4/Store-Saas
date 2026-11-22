@@ -18,16 +18,16 @@ class ProductController extends Controller
         $products = Product::query()
             ->where('business_id', $business->id)
             ->where('is_published', true)
-            ->where('is_available', true)
             ->when(
                 $request->filled('category'),
                 fn ($query) => $query->whereHas('category', fn ($q) => $q->where('slug', $request->string('category'))),
             )
             ->when(
-                $request->filled('search'),
-                fn ($query) => $query->whereRaw('name LIKE ?', ['%'.(string) $request->query('search').'%']),
+                $request->filled('q') || $request->filled('search'),
+                fn ($query) => $query->whereRaw('name LIKE ?', ['%'.(string) $request->query('q', $request->query('search')).'%']),
             )
-            ->with(['variants' => fn ($query) => $query->orderBy('sort_order'), 'category'])
+            ->with(['variants' => fn ($query) => $query->orderBy('sort_order'), 'category', 'modifierGroups.modifiers', 'media'])
+            ->orderByDesc('is_available')
             ->orderBy('sort_order')
             ->paginate($perPage);
 
@@ -45,7 +45,7 @@ class ProductController extends Controller
     public function show(Business $business, Product $product): JsonResponse
     {
         abort_unless((int) $product->business_id === (int) $business->id, 404);
-        abort_unless($product->is_published && $product->is_available, 404);
+        abort_unless($product->is_published, 404);
 
         $product->load(['variants' => fn ($query) => $query->orderBy('sort_order'), 'category', 'modifierGroups.modifiers']);
 
@@ -59,11 +59,12 @@ class ProductController extends Controller
      */
     private function transform(Product $product): array
     {
+        // M8.2: out-of-stock or switched-off items stay listed, marked unavailable.
         $variants = $product->variants
-            ->filter(fn (ProductVariant $variant): bool => ! $product->track_stock || $variant->availableQty() > 0)
             ->map(fn (ProductVariant $variant) => [
                 'id' => $variant->id,
                 'name' => $variant->translated('name'),
+                'available' => $product->is_available && (! $product->track_stock || $variant->availableQty() > 0),
                 'sku' => $variant->sku,
                 'barcode' => $variant->barcode,
                 'unit' => $variant->unit->value,
@@ -79,6 +80,7 @@ class ProductController extends Controller
             'category' => $product->category?->slug,
             'images' => $product->getMedia('images')->map(fn ($media) => $media->getUrl())->values(),
             'price_cents' => $variants->min('price_cents'),
+            'available' => $variants->contains('available', true),
             'variants' => $variants,
             'modifiers' => collect($product->modifierGroups ?? [])->map(fn ($group) => [
                 'id' => $group->id,

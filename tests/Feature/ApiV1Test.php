@@ -4,6 +4,7 @@ use App\Contracts\PaymentGateway;
 use App\Contracts\PushNotifier;
 use App\Enums\FulfillmentType;
 use App\Models\Business;
+use App\Models\BusinessType;
 use App\Models\Customer;
 use App\Models\Inquiry;
 use App\Models\OrderStatusHistory;
@@ -299,4 +300,26 @@ it('pushes order status changes to the customer devices', function (): void {
     $order->update(['expires_at' => now()->subMinute()]);
 
     expect($push->sent)->toBe(['accepted']);
+});
+
+it('filters stores by type, name and fulfillment, paginated (M8.1)', function (): void {
+    $grocery = BusinessType::factory()->create(['key' => 'grocery']);
+    Business::factory()->withSettings(['delivery_enabled' => true])->create(['business_type_id' => $grocery->id, 'name' => ['en' => 'Fresh Market', 'ar' => 'فريش']]);
+    Business::factory()->withSettings(['delivery_enabled' => false])->create(['business_type_id' => $grocery->id, 'name' => ['en' => 'Corner Shop', 'ar' => 'ركن']]);
+    Business::factory()->create(['name' => ['en' => 'Other', 'ar' => 'آخر']]);
+
+    $this->getJson('/api/v1/businesses?type=grocery')->assertOk()->assertJsonPath('meta.total', 2);
+    $this->getJson('/api/v1/businesses?type=grocery&fulfillment=delivery')->assertOk()->assertJsonCount(1, 'data');
+    $this->getJson('/api/v1/businesses?q=Corner')->assertOk()->assertJsonPath('data.0.name.en', 'Corner Shop');
+});
+
+it('lists out-of-stock items as unavailable instead of hiding them (M8.2)', function (): void {
+    $business = Business::factory()->create();
+    $product = Product::factory()->forBusiness($business)->create(['track_stock' => true, 'is_published' => true, 'is_available' => true]);
+    ProductVariant::factory()->forProduct($product)->create(['stock_qty' => 0, 'reserved_qty' => 0]);
+
+    $this->getJson('/api/v1/businesses/'.$business->slug.'/products')
+        ->assertOk()
+        ->assertJsonPath('data.0.available', false)
+        ->assertJsonPath('data.0.variants.0.available', false);
 });

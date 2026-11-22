@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessType;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BusinessController extends Controller
 {
@@ -22,12 +23,32 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function index(): JsonResponse
+    /**
+     * Stores in the app (M8.1): filter by type, name and fulfillment.
+     */
+    public function index(Request $request): JsonResponse
     {
-        $businesses = Business::query()->where('status', 'active')->get();
+        $search = trim((string) $request->query('q', ''));
+        $fulfillment = (string) $request->query('fulfillment', '');
+
+        $businesses = Business::query()
+            ->where('status', 'active')
+            ->with(['businessType', 'media'])
+            ->when($request->filled('type'), fn ($query) => $query->whereHas('businessType', fn ($q) => $q->where('key', $request->string('type'))))
+            ->when($search !== '', fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
+            ->when(in_array($fulfillment, ['pickup', 'delivery'], true), fn ($query) => $query->where("settings->{$fulfillment}_enabled", true))
+            ->orderBy('id')
+            ->paginate(min((int) $request->query('per_page', 20), 50));
 
         return response()->json([
-            'data' => $businesses->map(fn (Business $business) => [
+            'meta' => [
+                'current_page' => $businesses->currentPage(),
+                'last_page' => $businesses->lastPage(),
+                'per_page' => $businesses->perPage(),
+                'total' => $businesses->total(),
+            ],
+            'data' => $businesses->getCollection()->map(fn (Business $business) => [
+                'logo_url' => $business->getFirstMediaUrl('logo') ?: null,
                 'slug' => $business->slug,
                 'name' => $business->name,
                 'phone' => $business->phone,

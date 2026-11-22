@@ -14,6 +14,8 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StoreStats extends StatsOverviewWidget
 {
+    protected static bool $isLazy = false;
+
     protected static ?int $sort = 1;
 
     protected ?string $pollingInterval = '30s';
@@ -21,6 +23,11 @@ class StoreStats extends StatsOverviewWidget
     public static function canView(): bool
     {
         return BusinessPanel::can(Permission::ViewReports);
+    }
+
+    protected function getColumns(): int
+    {
+        return BusinessPanel::isType(['car_showroom', 'car_rental']) ? 3 : (BusinessPanel::isType(['restaurant']) ? 4 : 5);
     }
 
     protected function getStats(): array
@@ -34,10 +41,10 @@ class StoreStats extends StatsOverviewWidget
 
         $stats = [
             Stat::make(__('Sales today'), Money::format($today['revenue_cents'], $currency))
-                ->description(__(':count sales', ['count' => $today['sales_count']])),
+                ->description(trans_choice('{0} No sales yet today|{1} 1 sale|[2,*] :count sales', $today['sales_count'], ['count' => $today['sales_count']])),
             Stat::make(__('Net profit this month'), Money::format($month['net_profit_cents'], $currency))
                 ->color($month['net_profit_cents'] >= 0 ? 'success' : 'danger')
-                ->description(__('Revenue :revenue · expenses :expenses', ['revenue' => Money::format($month['revenue_cents'], $currency), 'expenses' => Money::format($month['expenses_cents'], $currency)])),
+                ->description(__('Revenue :revenue, expenses :expenses', ['revenue' => Money::format($month['revenue_cents'], $currency), 'expenses' => Money::format($month['expenses_cents'], $currency)])),
         ];
 
         if (! BusinessPanel::isType(['car_showroom', 'car_rental'])) {

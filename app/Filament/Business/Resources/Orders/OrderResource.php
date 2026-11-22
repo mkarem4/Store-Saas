@@ -145,6 +145,7 @@ class OrderResource extends BusinessResource
             ->filters([
                 SelectFilter::make('status')->options(OrderStatus::class)->multiple(),
                 SelectFilter::make('fulfillment')->options(FulfillmentType::class),
+                SelectFilter::make('payment_status')->label(__('Payment'))->options(PaymentStatus::class),
             ])
             ->recordActions([
                 ...self::workflowActions(),

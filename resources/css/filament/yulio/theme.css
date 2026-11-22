@@ -1,0 +1,41 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+
+/*
+ * Yulio — the shop counter. Quiet stone chrome, receipt-ink accent,
+ * receipt paper as the one rich surface (POS cart, totals).
+ */
+@theme {
+    --font-figures: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+    /* Figures line up in every table, stat and total. */
+    .fi-ta-text, .fi-wi-stats-overview-stat-value, .fi-in-text, .yl-figure {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Receipt paper: the signature surface. */
+    .yl-receipt {
+        @apply relative rounded-xl bg-white text-gray-950 ring-1 ring-gray-950/5 shadow-sm dark:bg-gray-900 dark:text-white dark:ring-white/10;
+    }
+
+    /* The perforated tear line, used only above totals. */
+    .yl-tear {
+        @apply my-3 h-px w-full;
+        background-image: linear-gradient(to right, var(--color-gray-300) 50%, transparent 0);
+        background-size: 8px 1px;
+        background-repeat: repeat-x;
+    }
+
+    .dark .yl-tear {
+        background-image: linear-gradient(to right, var(--color-gray-700) 50%, transparent 0);
+    }
+
+    .yl-tile {
+        @apply flex min-h-24 flex-col justify-between gap-2 rounded-xl bg-white p-3 text-start ring-1 ring-gray-950/5 transition-colors hover:ring-primary-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 dark:bg-gray-900 dark:ring-white/10 dark:hover:ring-primary-400/40;
+    }
+}

@@ -134,6 +134,7 @@ class ProductResource extends BusinessResource
         return [
             RelationManagers\VariantsRelationManager::class,
             RelationManagers\ModifierGroupsRelationManager::class,
+            RelationManagers\SerialNumbersRelationManager::class,
         ];
     }
 

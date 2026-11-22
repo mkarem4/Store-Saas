@@ -10,6 +10,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
+use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -20,6 +21,23 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 trait ConfiguresPanel
 {
+    /**
+     * Receipt-ink blue with #1E40AF (Tailwind blue-800) as the 600 shade
+     * Filament uses for buttons and links, so the accent stays deep.
+     *
+     * @return array<int, string>
+     */
+    protected static function inkPalette(): array
+    {
+        $blue = Color::Blue;
+
+        return [
+            50 => $blue[50], 100 => $blue[100], 200 => $blue[200], 300 => $blue[300],
+            400 => $blue[500], 500 => $blue[700], 600 => $blue[800], 700 => $blue[900],
+            800 => $blue[950], 900 => $blue[950], 950 => $blue[950],
+        ];
+    }
+
     protected function base(Panel $panel, string $id): Panel
     {
         $namespace = ucfirst($id);
@@ -31,6 +49,17 @@ trait ConfiguresPanel
             ->profile(isSimple: false)
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+            ->viteTheme('resources/css/filament/yulio/theme.css')
+            ->font('IBM Plex Sans Arabic')
+            ->colors([
+                'primary' => self::inkPalette(),
+                'gray' => Color::Stone,
+                'success' => Color::Green,
+                'danger' => Color::Red,
+                'warning' => Color::Amber,
+                'info' => Color::Sky,
+            ])
+            ->favicon(asset('favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
             ->discoverResources(in: app_path("Filament/{$namespace}/Resources"), for: "App\\Filament\\{$namespace}\\Resources")

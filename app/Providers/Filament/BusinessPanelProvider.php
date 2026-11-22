@@ -3,10 +3,10 @@
 namespace App\Providers\Filament;
 
 use App\Models\Business;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 
 class BusinessPanelProvider extends PanelProvider
 {
@@ -17,10 +17,9 @@ class BusinessPanelProvider extends PanelProvider
         return $this->base($panel, 'business')
             ->passwordReset()
             ->brandName(fn (): string => filament()->getTenant()?->translatedName() ?? config('app.name'))
-            ->colors(['primary' => Color::Emerald])
             ->tenant(Business::class, slugAttribute: 'slug')
             ->tenantMenu(false)
-            ->navigationGroups([__('Sales'), __('Catalog'), __('Inventory'), __('Vehicles'), __('Rentals'), __('Team'), __('Finance'), __('Settings')])
+            ->navigationGroups([NavigationGroup::make(fn (): string => __('Sales')), NavigationGroup::make(fn (): string => __('Catalog')), NavigationGroup::make(fn (): string => __('Inventory')), NavigationGroup::make(fn (): string => __('Vehicles')), NavigationGroup::make(fn (): string => __('Rentals')), NavigationGroup::make(fn (): string => __('Team')), NavigationGroup::make(fn (): string => __('Finance')), NavigationGroup::make(fn (): string => __('Settings'))])
             ->pages([Dashboard::class]);
     }
 }

@@ -14,6 +14,8 @@ use App\Services\Payments\FakeGateway;
 use App\Services\Payments\StripeGateway;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\LogPushNotifier;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -62,6 +64,10 @@ class AppServiceProvider extends ServiceProvider
                 $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
             }
         });
+
+        // Money and counts read the same in Arabic and English: western digits, "$1,234.50".
+        Table::configureUsing(fn (Table $table) => $table->defaultNumberLocale('en_US'));
+        Schema::configureUsing(fn (Schema $schema) => $schema->defaultNumberLocale('en_US'));
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');

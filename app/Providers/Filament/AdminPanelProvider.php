@@ -2,12 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\PlatformSetting;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -17,9 +16,8 @@ class AdminPanelProvider extends PanelProvider
     {
         return $this->base($panel, 'admin')
             ->default()
-            ->brandName(fn (): string => (string) PlatformSetting::get('platform_name', config('app.name')).' · '.__('Admin'))
-            ->colors(['primary' => Color::Amber])
-            ->navigationGroups([__('Stores'), __('Payments'), __('Platform')])
+            ->brandName(fn (): string => __('Yulio'))
+            ->navigationGroups([NavigationGroup::make(fn (): string => __('Stores')), NavigationGroup::make(fn (): string => __('Payments')), NavigationGroup::make(fn (): string => __('Platform'))])
             ->pages([Dashboard::class])
             ->plugins([FilamentShieldPlugin::make()]);
     }
