@@ -17,6 +17,13 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PlatformStats extends StatsOverviewWidget
 {
+    protected ?string $pollingInterval = null;
+
+    protected function getColumns(): int|array|null
+    {
+        return ['md' => 3, 'xl' => 5];
+    }
+
     protected function getStats(): array
     {
         $monthStart = now()->startOfMonth();

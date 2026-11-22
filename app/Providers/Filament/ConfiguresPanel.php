@@ -39,19 +39,19 @@ trait ConfiguresPanel
     }
 
     /**
-     * Cleared-ledger teal for the platform console, with #0F766E (teal-700)
-     * as the 600 shade so white button text keeps 5.4:1 contrast.
+     * Monochrome primary for the platform console (Vercel-style): buttons,
+     * toggles and links in near-black, so color is left for status alone.
      *
      * @return array<int, string>
      */
-    protected static function tealPalette(): array
+    protected static function graphitePalette(): array
     {
-        $teal = Color::Teal;
+        $zinc = Color::Zinc;
 
         return [
-            50 => $teal[50], 100 => $teal[100], 200 => $teal[200], 300 => $teal[300],
-            400 => $teal[400], 500 => $teal[600], 600 => $teal[700], 700 => $teal[800],
-            800 => $teal[900], 900 => $teal[950], 950 => $teal[950],
+            50 => $zinc[50], 100 => $zinc[100], 200 => $zinc[200], 300 => $zinc[300],
+            400 => $zinc[400], 500 => $zinc[600], 600 => $zinc[900], 700 => $zinc[950],
+            800 => $zinc[950], 900 => $zinc[950], 950 => $zinc[950],
         ];
     }
 
@@ -83,7 +83,8 @@ trait ConfiguresPanel
             ->discoverPages(in: app_path("Filament/{$namespace}/Pages"), for: "App\\Filament\\{$namespace}\\Pages")
             ->discoverWidgets(in: app_path("Filament/{$namespace}/Widgets"), for: "App\\Filament\\{$namespace}\\Widgets")
             ->renderHook(PanelsRenderHook::BODY_START, fn (): string => view('filament.partials.impersonation-banner')->render())
-            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): string => view('filament.partials.locale-switcher')->render())
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): string => filament()->hasTopbar() ? view('filament.partials.locale-switcher')->render() : '')
+            ->renderHook(PanelsRenderHook::USER_MENU_PROFILE_AFTER, fn (): string => filament()->hasTopbar() ? '' : view('filament.partials.locale-menu')->render())
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

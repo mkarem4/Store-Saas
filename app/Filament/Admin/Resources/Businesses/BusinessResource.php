@@ -73,11 +73,11 @@ class BusinessResource extends Resource
                 SpatieMediaLibraryFileUpload::make('logo')->label(__('Logo'))->collection('logo')->image()->imageEditor(),
                 SpatieMediaLibraryFileUpload::make('cover')->label(__('Cover image'))->collection('cover')->image(),
             ]),
-            Section::make(__('Contact & location'))->columns(3)->schema([
+            Section::make(__('Contact & location'))->columns(2)->schema([
                 TextInput::make('phone')->label(__('Phone'))->tel(),
                 TextInput::make('email')->label(__('Email'))->email(),
                 TextInput::make('website')->label(__('Website'))->url(),
-                TextInput::make('address_line')->label(__('Address'))->columnSpan(2),
+                TextInput::make('address_line')->label(__('Address'))->columnSpanFull(),
                 TextInput::make('city')->label(__('City')),
                 Select::make('country')->label(__('Country'))->options(['US' => __('United States'), 'JO' => __('Jordan')])->default('US')->required()->live(),
                 TextInput::make('state')->label(__('State / region'))
@@ -91,6 +91,7 @@ class BusinessResource extends Resource
                 Select::make('currency')->label(__('Currency'))->options(['USD' => 'USD', 'JOD' => 'JOD'])->default('USD')->required(),
             ]),
             Section::make(__('Store owner account'))
+                ->columnSpanFull()
                 ->description(__('The owner signs in at /business with this email and the temporary password, then sets their own.'))
                 ->columns(3)
                 ->visibleOn('create')
