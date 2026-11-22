@@ -27,6 +27,16 @@ class SerialNumbersRelationManager extends RelationManager
 
     public const STATUSES = ['in_stock' => 'In stock', 'sold' => 'Sold', 'returned' => 'Returned', 'defective' => 'Defective'];
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('serial number');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('serial numbers');
+    }
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('IMEI / serial numbers');

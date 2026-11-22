@@ -79,6 +79,8 @@ class Wallet extends Page implements HasTable
 
         return $table
             ->query(WalletTransaction::query()->with('order'))
+            ->modelLabel(__('transaction'))->pluralModelLabel(__('transactions'))
+            ->emptyStateDescription(__('Completed app orders, refunds and withdrawals appear here.'))
             ->heading(__('Transactions'))
             ->defaultSort('created_at', 'desc')
             ->columns([

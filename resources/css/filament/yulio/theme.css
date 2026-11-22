@@ -3,13 +3,236 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 
-
 /*
- * Yulio — the shop counter. Quiet stone chrome, receipt-ink accent,
- * receipt paper as the one rich surface (POS cart, totals).
+ * Yulio — one shell for every panel, after Linear / Vercel: a quiet sidebar on
+ * a neutral canvas, the page as one white panel beside it, color kept for the
+ * panel accent and for status. The POS receipt is the one rich surface.
+ *
+ * Shell rules are unlayered on purpose so they win over Filament's component
+ * styles and utilities without !important.
  */
 @theme {
-    --font-figures: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+    --font-figures: 'Geist', 'Readex Pro', ui-sans-serif, system-ui, sans-serif;
+
+    /* Motion tokens: small feedback, menus/overlays, and one shared easing. */
+    --yl-duration-fast: 150ms;
+    --yl-duration-base: 200ms;
+    --yl-duration-slow: 260ms;
+    --yl-ease: cubic-bezier(0.2, 0, 0, 1);
+    --yl-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Canvas */
+.fi-body {
+    @apply bg-gray-100 dark:bg-gray-950;
+}
+
+/* The page as one panel */
+@media (min-width: 64rem) {
+    .fi-main-ctn {
+        @apply my-2 me-2 rounded-xl bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10;
+        min-height: calc(100dvh - 1rem) !important;
+    }
+}
+
+@media (max-width: 63.98rem) {
+    .fi-main-ctn {
+        @apply bg-white dark:bg-gray-900;
+    }
+}
+
+/* Sections and tables inside the panel: hairlines, no lift */
+.fi-main .fi-section:not(.fi-section-not-contained),
+.fi-main .fi-ta-ctn,
+.fi-main .fi-wi-stats-overview-stat {
+    @apply shadow-none ring-gray-950/7 dark:ring-white/10;
+}
+
+.fi-header-heading {
+    @apply text-2xl font-semibold tracking-tight;
+}
+
+/* Sidebar */
+.fi-sidebar {
+    @apply bg-gray-100 lg:bg-transparent dark:bg-gray-950 dark:lg:bg-transparent;
+}
+
+.fi-sidebar .fi-sidebar-header {
+    @apply px-4;
+}
+
+.fi-sidebar .fi-sidebar-header-controls {
+    @apply after:hidden;
+}
+
+.fi-sidebar .fi-sidebar-nav {
+    @apply gap-y-5 px-3 py-3;
+    scrollbar-width: thin;
+}
+
+.fi-sidebar .fi-sidebar-nav-groups {
+    @apply mx-0 gap-y-5;
+}
+
+.fi-sidebar .fi-sidebar-group {
+    @apply gap-y-0.5;
+}
+
+.fi-sidebar .fi-sidebar-group-btn {
+    @apply px-2 py-1;
+
+    & .fi-icon {
+        @apply size-4 text-gray-400;
+    }
+}
+
+.fi-sidebar .fi-sidebar-group-label {
+    @apply text-xs font-medium text-gray-500 dark:text-gray-400;
+}
+
+.fi-sidebar .fi-sidebar-group-items {
+    @apply gap-y-0.5;
+}
+
+.fi-sidebar .fi-sidebar-item-btn,
+.fi-sidebar .fi-sidebar-database-notifications-btn,
+.fi-sidebar .fi-sidebar-group-dropdown-trigger-btn {
+    @apply gap-x-2.5 rounded-md px-2 py-1.5 hover:bg-gray-950/5 focus-visible:bg-gray-950/5 focus-visible:ring-2 focus-visible:ring-gray-950/20 dark:hover:bg-white/5 dark:focus-visible:bg-white/5;
+
+    & > .fi-icon {
+        @apply size-4.5 text-gray-500 dark:text-gray-400;
+    }
+}
+
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn {
+    @apply hover:bg-gray-950/5 dark:hover:bg-white/5;
+}
+
+.fi-sidebar .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-database-notifications-btn-label {
+    @apply text-sm font-normal text-gray-700 dark:text-gray-300;
+}
+
+/* Active: the white chip of the panel, raised on the canvas */
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    @apply bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-white/10 dark:ring-white/10;
+
+    & > .fi-icon {
+        @apply text-gray-950 dark:text-white;
+    }
+
+    & > .fi-sidebar-item-label {
+        @apply font-medium text-gray-950 dark:text-white;
+    }
+}
+
+.fi-sidebar .fi-sidebar-item-grouped-border-part {
+    @apply bg-gray-300 dark:bg-gray-600;
+}
+
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-grouped-border-part {
+    @apply bg-gray-950 dark:bg-white;
+}
+
+/* Search: a white field on the canvas */
+.fi-sidebar .fi-global-search-field .fi-input-wrp {
+    @apply bg-white shadow-xs ring-gray-950/8 dark:bg-white/5 dark:ring-white/10;
+}
+
+/* Footer: notifications row and the account card */
+.fi-sidebar .fi-sidebar-footer {
+    @apply mx-3 gap-y-1 border-gray-950/7 pt-2 dark:border-white/10;
+}
+
+.fi-sidebar .fi-user-menu-trigger {
+    @apply gap-x-2.5 rounded-lg px-2 py-2 hover:bg-gray-950/5 dark:hover:bg-white/5;
+
+    & .fi-user-avatar {
+        @apply size-7 rounded-md ring-1 ring-gray-950/10 dark:ring-white/20;
+    }
+
+    & > .fi-icon {
+        @apply size-4 text-gray-400;
+    }
+}
+
+.fi-sidebar .fi-user-menu-trigger-text {
+    @apply text-sm font-medium text-gray-950 dark:text-white;
+}
+
+/* Brand: the panel's accent carries the mark (graphite in the console, ink in stores) */
+.yl-brand-mark {
+    @apply grid size-7 shrink-0 place-items-center rounded-md bg-primary-600 text-sm leading-none font-semibold text-white dark:bg-white dark:text-gray-950;
+}
+
+/* Language switch inside the account menu */
+.yl-locale-menu {
+    @apply flex items-center justify-between gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-200;
+}
+
+.yl-segmented {
+    @apply inline-flex rounded-md bg-gray-100 p-0.5 dark:bg-white/5;
+
+    & a {
+        @apply rounded px-2.5 py-1 text-xs font-medium text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-white;
+    }
+
+    & a[aria-current='true'] {
+        @apply bg-white text-gray-950 shadow-xs ring-1 ring-gray-950/5 dark:bg-white/10 dark:text-white dark:ring-white/10;
+    }
+}
+
+/* Phone: the menu button bar belongs to the page, not the canvas */
+@media (max-width: 63.98rem) {
+    .fi-layout-sidebar-toggle-btn-ctn {
+        @apply bg-white pb-1 dark:bg-gray-900;
+    }
+}
+
+/* Motion: colour and shadow only, never layout, on the things people touch */
+.fi-btn,
+.fi-icon-btn,
+.fi-link,
+.fi-tabs-item,
+.fi-dropdown-list-item,
+.fi-sidebar-item-btn,
+.fi-sidebar-group-btn,
+.fi-sidebar-database-notifications-btn,
+.fi-user-menu-trigger,
+.fi-input-wrp,
+.fi-ta-row,
+.yl-segmented a {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: var(--yl-duration-fast);
+    transition-timing-function: var(--yl-ease);
+}
+
+.fi-sidebar-group-collapse-btn,
+.fi-section-collapse-btn {
+    transition: transform var(--yl-duration-base) var(--yl-ease);
+}
+
+/* Mobile sidebar slides in on the reading side and leaves a little faster */
+@media (max-width: 63.98rem) {
+    .fi-sidebar {
+        transition: transform var(--yl-duration-slow) var(--yl-ease), box-shadow var(--yl-duration-slow) var(--yl-ease);
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) {
+        transition-timing-function: var(--yl-ease-in);
+        transition-duration: var(--yl-duration-base);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 @layer components {
@@ -18,9 +241,15 @@
         font-variant-numeric: tabular-nums;
     }
 
+    /* Emails, phone numbers, codes and money read left-to-right inside Arabic. */
+    .yl-ltr {
+        direction: ltr;
+        unicode-bidi: isolate;
+    }
+
     /* Receipt paper: the signature surface. */
     .yl-receipt {
-        @apply relative rounded-xl bg-white text-gray-950 ring-1 ring-gray-950/5 shadow-sm dark:bg-gray-900 dark:text-white dark:ring-white/10;
+        @apply relative rounded-xl bg-white text-gray-950 ring-1 ring-gray-950/7 dark:bg-gray-900 dark:text-white dark:ring-white/10;
     }
 
     /* The perforated tear line, used only above totals. */
@@ -36,6 +265,7 @@
     }
 
     .yl-tile {
-        @apply flex min-h-24 flex-col justify-between gap-2 rounded-xl bg-white p-3 text-start ring-1 ring-gray-950/5 transition-colors hover:ring-primary-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 dark:bg-gray-900 dark:ring-white/10 dark:hover:ring-primary-400/40;
+        @apply flex min-h-24 flex-col justify-between gap-2 rounded-xl bg-white p-3 text-start ring-1 ring-gray-950/7 hover:ring-primary-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 active:scale-[0.98] dark:bg-gray-900 dark:ring-white/10 dark:hover:ring-primary-400/40;
+        transition: box-shadow var(--yl-duration-fast) var(--yl-ease), transform var(--yl-duration-fast) var(--yl-ease);
     }
 }

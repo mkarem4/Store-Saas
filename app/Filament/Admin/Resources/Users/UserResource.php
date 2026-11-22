@@ -91,6 +91,7 @@ class UserResource extends Resource
             ->recordActions([
                 EditAction::make(),
                 Action::make('resetPassword')
+                    ->modalSubmitActionLabel(__('Reset password'))
                     ->label(__('Temporary password'))
                     ->icon(Heroicon::OutlinedKey)
                     ->requiresConfirmation()

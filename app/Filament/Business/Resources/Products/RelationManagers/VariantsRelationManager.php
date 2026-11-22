@@ -32,6 +32,16 @@ class VariantsRelationManager extends RelationManager
 {
     protected static string $relationship = 'variants';
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('variant');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('variants');
+    }
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('Variants & stock');

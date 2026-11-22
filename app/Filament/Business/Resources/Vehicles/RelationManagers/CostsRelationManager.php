@@ -27,6 +27,16 @@ class CostsRelationManager extends RelationManager
 {
     protected static string $relationship = 'costs';
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('cost');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('costs');
+    }
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('Maintenance & costs');

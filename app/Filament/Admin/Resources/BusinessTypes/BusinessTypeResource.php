@@ -61,7 +61,7 @@ class BusinessTypeResource extends Resource
                 ->disabledOn('edit')
                 ->helperText(__('Stable identifier, e.g. bookstore.')),
             TextInput::make('icon')->label(__('Icon'))->placeholder('heroicon-o-building-storefront'),
-            TextInput::make('sort_order')->label(__('Order'))->integer()->default(0),
+            TextInput::make('sort_order')->label(__('Display order'))->helperText(__('Lower numbers appear first.'))->integer()->default(0),
             Fields::translatable('name', __('Name')),
             Toggle::make('is_active')->label(__('Active (shown in the app)'))->default(true)->columnSpanFull(),
             Repeater::make('fields')

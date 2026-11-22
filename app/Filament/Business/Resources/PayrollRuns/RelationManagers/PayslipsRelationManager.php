@@ -20,6 +20,16 @@ class PayslipsRelationManager extends RelationManager
 {
     protected static string $relationship = 'payslips';
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('payslip');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('payslips');
+    }
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('Payslips');
@@ -46,7 +56,7 @@ class PayslipsRelationManager extends RelationManager
                 TextColumn::make('total_cents')->label(__('Net pay'))->money($currency, divideBy: 100)->weight('bold'),
             ])
             ->recordActions([
-                Action::make('adjust')->label(__('Allowances / deductions'))->icon(Heroicon::OutlinedPencilSquare)
+                Action::make('adjust')->label(__('Allowances / deductions'))->modalSubmitActionLabel(__('Save'))->icon(Heroicon::OutlinedPencilSquare)
                     ->visible(fn (): bool => ! $this->getOwnerRecord()->isApproved())
                     ->fillForm(fn (Payslip $record): array => [
                         'allowances_cents' => $record->allowances_cents,

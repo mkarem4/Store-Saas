@@ -56,7 +56,7 @@ class CategoryResource extends BusinessResource
             TextInput::make('slug')->label(__('Slug'))->alphaDash()
                 ->helperText(__('Leave empty to generate it from the English name.'))
                 ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule->where('business_id', BusinessPanel::business()?->id)),
-            TextInput::make('sort_order')->label(__('Order'))->integer()->default(0),
+            TextInput::make('sort_order')->label(__('Display order'))->helperText(__('Lower numbers appear first.'))->integer()->default(0),
             Toggle::make('is_active')->label(__('Shown in the app'))->default(true),
         ]);
     }

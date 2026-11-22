@@ -98,7 +98,7 @@ class OrderResource extends BusinessResource
             Section::make(__('Items'))->columnSpanFull()->schema([
                 RepeatableEntry::make('items')->hiddenLabel()->columns(4)->schema([
                     TextEntry::make('name')->label(__('Item'))
-                        ->description(fn ($record): ?string => $record->modifiers->isEmpty() ? null : $record->modifiers->map(fn ($modifier): string => '+ '.$modifier->name)->implode(', ')),
+                        ->belowContent(fn ($record): ?string => $record->modifiers->isEmpty() ? null : $record->modifiers->map(fn ($modifier): string => '+ '.$modifier->name)->implode(', ')),
                     TextEntry::make('qty')->label(__('Qty'))->numeric(3),
                     TextEntry::make('unit_price_cents')->label(__('Unit price'))->money($currency, divideBy: 100),
                     TextEntry::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100),

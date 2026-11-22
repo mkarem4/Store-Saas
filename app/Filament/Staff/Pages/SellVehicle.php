@@ -61,6 +61,7 @@ class SellVehicle extends Page implements HasTable
     {
         return $table
             ->query(Vehicle::query()->where('purpose', 'sale')->whereIn('status', [VehicleStatus::Available, VehicleStatus::Reserved]))
+            ->modelLabel(__('vehicle'))->pluralModelLabel(__('vehicles'))
             ->columns([
                 TextColumn::make('name')->label(__('Vehicle'))->state(fn (Vehicle $record): string => $record->displayName())->description(fn (Vehicle $record): string => $record->vin)
                     ->searchable(['vin', 'make', 'model']),

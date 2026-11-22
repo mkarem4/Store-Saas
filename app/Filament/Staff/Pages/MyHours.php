@@ -86,6 +86,7 @@ class MyHours extends Page implements HasTable
 
         return $table
             ->query(TimeEntry::query()->where('employee_id', StaffPanel::employee()?->id))
+            ->modelLabel(__('shift'))->pluralModelLabel(__('shifts'))
             ->defaultSort('clock_in_at', 'desc')
             ->columns([
                 TextColumn::make('clock_in_at')->label(__('Clock in'))->dateTime(timezone: $timezone),

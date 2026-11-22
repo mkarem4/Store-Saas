@@ -67,10 +67,14 @@ trait ConfiguresPanel
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->viteTheme('resources/css/filament/yulio/theme.css')
-            ->font('IBM Plex Sans Arabic')
+            // Geist for Latin text and figures, Readex Pro for Arabic.
+            ->font("Geist', 'Readex Pro", url: 'https://fonts.bunny.net/css?family=geist:400,500,600|readex-pro:400,500,600&display=swap')
+            ->brandLogo(fn () => view('filament.partials.brand'))
+            ->topbar(false)
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->colors([
                 'primary' => self::inkPalette(),
-                'gray' => Color::Stone,
+                'gray' => Color::Zinc,
                 'success' => Color::Green,
                 'danger' => Color::Red,
                 'warning' => Color::Amber,
@@ -78,6 +82,11 @@ trait ConfiguresPanel
             ])
             ->favicon(asset('favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
+            ->unsavedChangesAlerts()
+            // Page-to-page navigation without full reloads. Routes that switch language,
+            // identity or leave the panel still do a full load.
+            ->spa()
+            ->spaUrlExceptions(fn (): array => [url('/locale/*'), url('/impersonate/*'), url('/receipts/*'), url('/filament/exports/*'), url('/filament/imports/*')])
             ->maxContentWidth('full')
             ->discoverResources(in: app_path("Filament/{$namespace}/Resources"), for: "App\\Filament\\{$namespace}\\Resources")
             ->discoverPages(in: app_path("Filament/{$namespace}/Pages"), for: "App\\Filament\\{$namespace}\\Pages")

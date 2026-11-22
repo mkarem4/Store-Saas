@@ -284,6 +284,7 @@ abstract class PointOfSalePage extends Page
     public function modifiersAction(): Action
     {
         return Action::make('modifiers')
+            ->modalSubmitActionLabel(__('Add to sale'))
             ->modalHeading(fn (array $arguments): string => (string) ProductVariant::query()->find($arguments['variant'] ?? 0)?->displayName())
             ->modalWidth(Width::Large)
             ->schema(function (array $arguments): array {
@@ -312,6 +313,7 @@ abstract class PointOfSalePage extends Page
     public function weightAction(): Action
     {
         return Action::make('weight')
+            ->modalSubmitActionLabel(__('Add to sale'))
             ->modalHeading(fn (array $arguments): string => (string) ProductVariant::query()->find($arguments['variant'] ?? 0)?->displayName())
             ->modalWidth(Width::Small)
             ->schema([
@@ -325,6 +327,7 @@ abstract class PointOfSalePage extends Page
     public function discountAction(): Action
     {
         return Action::make('discount')
+            ->modalSubmitActionLabel(__('Apply discount'))
             ->visible(fn (): bool => $this->isOwner())
             ->modalWidth(Width::Small)
             ->fillForm(fn (array $arguments): array => ['discount_cents' => $this->cart[$arguments['key']]['discount_cents'] ?? 0])

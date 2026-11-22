@@ -68,7 +68,7 @@
         </div>
 
         {{-- The live receipt --}}
-        <aside class="yl-receipt flex flex-col p-5 lg:sticky lg:top-20">
+        <aside class="yl-receipt flex flex-col p-5 lg:sticky lg:top-6">
             <div class="flex items-center justify-between gap-3">
                 <h2 class="text-base font-semibold text-gray-950 dark:text-white">{{ __('Current sale') }}</h2>
                 <div class="flex items-center gap-4">

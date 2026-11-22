@@ -65,6 +65,7 @@ class GoldPrices extends Page implements HasTable
     {
         return $table
             ->query(GoldPrice::query())
+            ->modelLabel(__('gold price'))->pluralModelLabel(__('gold prices'))
             ->defaultSort('effective_date', 'desc')
             ->columns([
                 TextColumn::make('effective_date')->label(__('Date'))->date()->sortable(),

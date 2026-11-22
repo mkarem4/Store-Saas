@@ -14,9 +14,14 @@ use App\Services\Payments\FakeGateway;
 use App\Services\Payments\StripeGateway;
 use App\Services\Push\FcmPushNotifier;
 use App\Services\Push\LogPushNotifier;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
+use Filament\Infolists\Components\Entry;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Column;
+use Filament\Tables\Filters\BaseFilter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Login;
@@ -79,6 +84,22 @@ class AppServiceProvider extends ServiceProvider
             ->selectablePlaceholder(fn (Select $component): bool => ! $component->isRequired()));
         SelectFilter::configureUsing(fn (SelectFilter $filter) => $filter->native(false));
         DateTimePicker::configureUsing(fn (DateTimePicker $picker) => $picker->native(false));
+
+        // Labels Filament derives from a field name ("status" -> "Status") go through the translator too.
+        BaseFilter::configureUsing(fn (BaseFilter $filter) => $filter->translateLabel());
+        Column::configureUsing(fn (Column $column) => $column->translateLabel());
+        Field::configureUsing(fn (Field $field) => $field->translateLabel());
+        Entry::configureUsing(fn (Entry $entry) => $entry->translateLabel());
+
+        // A modal's submit button says what it does: it repeats the action's own label
+        // ("Return items", "Reject"). Filament's Create/Save/Delete set their own in setUp().
+        Action::configureUsing(fn (Action $action) => $action->modalSubmitActionLabel(fn (Action $action): string => (string) $action->getLabel()));
+
+        // Lists keep their search, filters and sort when you come back from a record.
+        Table::configureUsing(fn (Table $table) => $table
+            ->persistFiltersInSession()
+            ->persistSearchInSession()
+            ->persistSortInSession());
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');

@@ -28,6 +28,16 @@ class ModifierGroupsRelationManager extends RelationManager
 {
     protected static string $relationship = 'modifierGroups';
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('option group');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('option groups');
+    }
+
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
         return __('Options & add-ons');
