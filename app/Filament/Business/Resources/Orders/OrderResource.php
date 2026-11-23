@@ -94,9 +94,15 @@ class OrderResource extends BusinessResource
                 TextEntry::make('expires_at')->label(__('Accept before'))->dateTime()->visible(fn (Order $record): bool => $record->isPending()),
                 TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(['default' => 2, 'lg' => 3])
                     ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery)
-                    ->state(fn (Order $record): string => collect([$record->delivery_address['line1'] ?? null, $record->delivery_address['line2'] ?? null, $record->delivery_address['city'] ?? null, $record->delivery_address['phone'] ?? null, $record->delivery_address['notes'] ?? null])->filter()->implode(' · '))
-                    ->url(fn (Order $record): ?string => isset($record->delivery_address['latitude'])
+                    ->state(fn (Order $record): string => collect($record->delivery_address)
+                        ->only(['line1', 'line2', 'city', 'state', 'postal_code'])->filter()->implode(' · '))
+                    ->url(fn (Order $record): ?string => isset($record->delivery_address['latitude'], $record->delivery_address['longitude'])
                         ? 'https://www.google.com/maps/search/?api=1&query='.$record->delivery_address['latitude'].','.$record->delivery_address['longitude'] : null, shouldOpenInNewTab: true),
+                TextEntry::make('delivery_address.phone')->label(__('Delivery phone'))
+                    ->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->placeholder('—')
+                    ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery),
+                TextEntry::make('delivery_address.notes')->label(__('Delivery notes'))->placeholder('—')->columnSpanFull()
+                    ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery),
                 TextEntry::make('delivery_distance_km')->label(__('Distance'))->suffix(' km')->placeholder('—')
                     ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery),
                 TextEntry::make('notes')->label(__('Customer notes'))->placeholder('—')->columnSpanFull(),
@@ -112,9 +118,11 @@ class OrderResource extends BusinessResource
             ]),
             Section::make(__('Totals'))->columnSpanFull()->columns(4)->schema([
                 TextEntry::make('subtotal_cents')->label(__('Items'))->money($currency, divideBy: 100),
+                TextEntry::make('discount_cents')->label(__('Discount'))->money($currency, divideBy: 100)
+                    ->visible(fn (Order $record): bool => $record->discount_cents > 0),
                 TextEntry::make('delivery_fee_cents')->label(__('Delivery'))->money($currency, divideBy: 100),
                 TextEntry::make('tax_cents')->label(__('Tax'))->money($currency, divideBy: 100),
-                TextEntry::make('total_cents')->label(__('Total paid'))->money($currency, divideBy: 100),
+                TextEntry::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100),
                 TextEntry::make('platform_fee_cents')->label(__('Platform commission'))->money($currency, divideBy: 100),
                 TextEntry::make('gateway_fee_cents')->label(__('Payment fee'))->money($currency, divideBy: 100),
                 TextEntry::make('store_payout_cents')->label(__('Your net'))->money($currency, divideBy: 100),

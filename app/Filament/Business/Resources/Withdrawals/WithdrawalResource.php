@@ -3,13 +3,18 @@
 namespace App\Filament\Business\Resources\Withdrawals;
 
 use App\Enums\BusinessTypeKey;
+use App\Enums\PayoutStatus;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Models\PayoutRequest;
 use App\Support\Permission;
 use BackedEnum;
+use Filament\Actions\ViewAction;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -57,10 +62,34 @@ class WithdrawalResource extends BusinessResource
                 TextColumn::make('amount_cents')->label(__('Amount'))->money(BusinessPanel::currency(), divideBy: 100),
                 TextColumn::make('method_snapshot.summary')->label(__('To'))->placeholder('—'),
                 TextColumn::make('status')->label(__('Status'))->badge(),
-                TextColumn::make('reference')->label(__('Transfer reference'))->placeholder('—'),
+                TextColumn::make('reference')->label(__('Transfer reference'))->placeholder('—')->searchable(),
                 TextColumn::make('admin_note')->label(__('Platform note'))->placeholder('—')->limit(40),
                 TextColumn::make('paid_at')->label(__('Paid'))->date()->placeholder('—'),
-            ]);
+            ])
+            ->filters([
+                SelectFilter::make('status')->options(PayoutStatus::class),
+            ])
+            ->recordActions([ViewAction::make()]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        $timezone = BusinessPanel::business()?->timezone;
+
+        return $schema->columns(2)->components([
+            TextEntry::make('id')->label('#'),
+            TextEntry::make('status')->label(__('Status'))->badge(),
+            TextEntry::make('amount_cents')->label(__('Amount'))->money(BusinessPanel::currency(), divideBy: 100),
+            TextEntry::make('method_snapshot.summary')->label(__('Method'))->placeholder('—'),
+            TextEntry::make('created_at')->label(__('Requested'))->dateTime(timezone: $timezone),
+            TextEntry::make('approved_at')->label(__('Approved at'))->dateTime(timezone: $timezone)->placeholder('—'),
+            TextEntry::make('paid_at')->label(__('Paid at'))->dateTime(timezone: $timezone)->placeholder('—'),
+            TextEntry::make('rejected_at')->label(__('Rejected at'))->dateTime(timezone: $timezone)->placeholder('—'),
+            TextEntry::make('requester.name')->label(__('Requested by'))->placeholder('—'),
+            TextEntry::make('reference')->label(__('Transfer reference'))->placeholder('—'),
+            TextEntry::make('note')->label(__('Store note'))->placeholder('—')->columnSpanFull(),
+            TextEntry::make('admin_note')->label(__('Platform note'))->placeholder('—')->columnSpanFull(),
+        ]);
     }
 
     public static function canCreate(): bool
@@ -80,6 +109,9 @@ class WithdrawalResource extends BusinessResource
 
     public static function getPages(): array
     {
-        return ['index' => Pages\ListWithdrawals::route('/')];
+        return [
+            'index' => Pages\ListWithdrawals::route('/'),
+            'view' => Pages\ViewWithdrawal::route('/{record}'),
+        ];
     }
 }

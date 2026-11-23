@@ -2,25 +2,32 @@
 
 use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
+use App\Enums\PayoutStatus;
 use App\Enums\UserRole;
+use App\Exports\ProductsExport;
 use App\Filament\Business\Pages\PointOfSale;
 use App\Filament\Business\Pages\StoreSettings;
 use App\Filament\Business\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Business\Resources\Employees\Pages\CreateEmployee;
 use App\Filament\Business\Resources\Employees\Pages\ListEmployees;
 use App\Filament\Business\Resources\Orders\Pages\ListOrders;
+use App\Filament\Business\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Business\Resources\Products\Pages\CreateProduct;
 use App\Filament\Business\Resources\Products\Pages\EditProduct;
 use App\Filament\Business\Resources\Products\Pages\ListProducts;
 use App\Filament\Business\Resources\Products\ProductResource;
 use App\Filament\Business\Resources\PurchaseReceipts\Pages\CreatePurchaseReceipt;
 use App\Filament\Business\Resources\Sales\SaleResource;
+use App\Filament\Business\Resources\Withdrawals\Pages\ListWithdrawals;
+use App\Filament\Business\Resources\Withdrawals\Pages\ViewWithdrawal;
+use App\Filament\Business\Resources\Withdrawals\WithdrawalResource;
 use App\Filament\Staff\Pages\TimeClock;
 use App\Models\Business;
 use App\Models\BusinessType;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\PayoutRequest;
 use App\Models\PlatformSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -34,6 +41,7 @@ use Database\Seeders\BusinessTypeSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -239,6 +247,66 @@ it('accepts and completes an app order from the orders screen (scenario 10)', fu
     expect($order->refresh()->status)->toBe(OrderStatus::Completed)
         ->and($order->tax_cents)->toBe(300)
         ->and($order->store_payout_cents)->toBeGreaterThan(0);
+
+    $order->update([
+        'fulfillment' => FulfillmentType::Delivery,
+        'delivery_address' => [
+            'line1' => '41 Main Street', 'city' => 'Austin', 'state' => 'Texas', 'postal_code' => '78701',
+            'phone' => '555-0188', 'notes' => 'Side entrance',
+        ],
+    ]);
+
+    Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+        ->assertSee('Texas')
+        ->assertSee('78701')
+        ->assertSee('555-0188')
+        ->assertSee('Side entrance');
+});
+
+it('shows full details of store withdrawals and excludes another store withdrawals', function (): void {
+    [$business, $owner] = storeOwner('grocery');
+    $withdrawal = PayoutRequest::query()->create([
+        'business_id' => $business->id,
+        'amount_cents' => 2500,
+        'status' => PayoutStatus::Paid,
+        'method_snapshot' => ['summary' => 'Bank ••••1234'],
+        'reference' => 'WIRE-7781',
+        'note' => 'Weekly withdrawal for the grocery store',
+        'admin_note' => 'Transfer confirmed by the platform',
+        'requested_by' => $owner->id,
+        'paid_at' => now(),
+    ]);
+    $foreignWithdrawal = PayoutRequest::query()->create([
+        'business_id' => Business::factory()->create()->id,
+        'amount_cents' => 7500,
+        'status' => PayoutStatus::Requested,
+        'method_snapshot' => ['summary' => 'Foreign bank'],
+    ]);
+
+    Livewire::test(ListWithdrawals::class)
+        ->assertCanSeeTableRecords([$withdrawal])
+        ->assertCanNotSeeTableRecords([$foreignWithdrawal]);
+
+    Livewire::test(ViewWithdrawal::class, ['record' => $withdrawal->getRouteKey()])
+        ->assertSee('Weekly withdrawal for the grocery store')
+        ->assertSee('Transfer confirmed by the platform');
+
+    $this->get(WithdrawalResource::getUrl('view', ['record' => $foreignWithdrawal, 'tenant' => $business]))
+        ->assertNotFound();
+});
+
+it('exports only the current store catalog from the products screen', function (): void {
+    [$business] = storeOwner('grocery');
+    $ownVariant = ProductVariant::factory()->forProduct(Product::factory()->forBusiness($business)->create())->create();
+    ProductVariant::factory()->forProduct(Product::factory()->forBusiness(Business::factory()->create())->create())->create();
+    Excel::fake();
+
+    Livewire::test(ListProducts::class)->callAction('export');
+
+    Excel::assertDownloaded(
+        'products-'.now()->format('Ymd').'.xlsx',
+        fn (ProductsExport $export): bool => $export->query()->pluck('id')->all() === [$ownVariant->id],
+    );
 });
 
 it('creates an employee with a staff sign-in', function (): void {

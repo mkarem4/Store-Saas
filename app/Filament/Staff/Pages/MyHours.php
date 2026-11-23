@@ -93,6 +93,7 @@ class MyHours extends Page implements HasTable
                 TextColumn::make('clock_out_at')->label(__('Clock out'))->dateTime(timezone: $timezone)->placeholder(__('Still in')),
                 TextColumn::make('hours')->label(__('Hours'))->state(fn (TimeEntry $record): string => number_format($record->minutesWorked() / 60, 2)),
                 IconColumn::make('is_auto_closed')->label(__('Auto-closed'))->boolean()->falseIcon(''),
+                TextColumn::make('reviewed_at')->label(__('Reviewed'))->dateTime(timezone: $timezone)->placeholder('—'),
             ]);
     }
 }
