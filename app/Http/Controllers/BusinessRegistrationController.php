@@ -34,6 +34,12 @@ class BusinessRegistrationController extends Controller
             'owner_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)],
             'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
+        ], attributes: [
+            'business_name' => __('Store name'),
+            'business_type_id' => __('Store type'),
+            'owner_name' => __('Owner name'),
+            'email' => __('Email'),
+            'password' => __('Password'),
         ]);
 
         $type = BusinessType::query()->where('is_active', true)->findOrFail((int) $data['business_type_id']);

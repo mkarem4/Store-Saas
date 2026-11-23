@@ -3,6 +3,354 @@
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
+/* Same switch as the Filament panels: `.dark` on <html>, stored in localStorage.theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Public site tokens. The panels are ink-on-zinc (Linear / Vercel); the site
+ * keeps that ink and adds one material from the shop counter: receipt paper.
+ * Green is reserved for money that stays in the shop (profit), never decoration.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Geist', 'Readex Pro', ui-sans-serif, system-ui, sans-serif;
+    --font-arabic: 'Readex Pro', 'Geist', ui-sans-serif, system-ui, sans-serif;
+
+    --color-canvas: var(--yl-canvas);
+    --color-raised: var(--yl-raised);
+    --color-sunken: var(--yl-sunken);
+    --color-ink: var(--yl-ink);
+    --color-ink-soft: var(--yl-ink-soft);
+    --color-muted: var(--yl-muted);
+    --color-line: var(--yl-line);
+    --color-line-strong: var(--yl-line-strong);
+    --color-on-ink: var(--yl-on-ink);
+    --color-profit: var(--yl-profit);
+    --color-danger: var(--yl-danger);
+    --color-paper: #fdfdfb;
+    --color-paper-ink: #18181b;
+    --color-paper-muted: #5f5f66;
+
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+:root {
+    color-scheme: light;
+    --yl-canvas: #ffffff;
+    --yl-raised: #ffffff;
+    --yl-sunken: #f4f4f5;
+    --yl-ink: #18181b;
+    --yl-ink-soft: #3f3f46;
+    --yl-muted: #5f5f66;
+    --yl-line: #e4e4e7;
+    --yl-line-strong: #8e8e96;
+    --yl-on-ink: #ffffff;
+    --yl-profit: #047857;
+    --yl-danger: #b91c1c;
+    --yl-header-h: 4.25rem;
+}
+
+:root.dark {
+    color-scheme: dark;
+    --yl-canvas: #09090b;
+    --yl-raised: #131316;
+    --yl-sunken: #18181b;
+    --yl-ink: #fafafa;
+    --yl-ink-soft: #d4d4d8;
+    --yl-muted: #a1a1aa;
+    --yl-line: #27272a;
+    --yl-line-strong: #6b6b74;
+    --yl-on-ink: #09090b;
+    --yl-profit: #34d399;
+    --yl-danger: #f87171;
+}
+
+@layer base {
+    html {
+        scroll-padding-top: calc(var(--yl-header-h) + 1rem);
+        overflow-x: clip;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    html:lang(ar) {
+        font-family: var(--font-arabic);
+    }
+
+    body {
+        @apply bg-canvas text-ink antialiased;
+        min-width: 20rem;
+    }
+
+    fieldset {
+        min-inline-size: 0;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--yl-ink);
+        outline-offset: 3px;
+        border-radius: 0.375rem;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        html {
+            scroll-behavior: smooth;
+        }
+    }
+}
+
+/* Type roles: one size per role at each width (no phone→desktop jumps). */
+@utility text-display {
+    font-size: clamp(2.25rem, 1.4rem + 3.6vw, 4.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 600;
+    text-wrap: balance;
+
+    &:lang(ar) {
+        line-height: 1.3;
+        letter-spacing: 0;
+    }
+}
+
+@utility text-title {
+    font-size: clamp(1.625rem, 1.2rem + 1.6vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-weight: 600;
+    text-wrap: balance;
+
+    &:lang(ar) {
+        line-height: 1.35;
+        letter-spacing: 0;
+    }
+}
+
+@utility text-lead {
+    font-size: clamp(1.0625rem, 0.98rem + 0.35vw, 1.25rem);
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+@utility figures {
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+@utility shell {
+    width: min(100% - 2rem, 76rem);
+    margin-inline: auto;
+
+    @media (width >= 48rem) {
+        width: min(100% - 4rem, 76rem);
+    }
+}
+
+@layer components {
+    /* Header: same height in both states, only the surface changes. */
+    .site-header {
+        @apply sticky top-0 z-40 border-b border-transparent;
+        height: var(--yl-header-h);
+        transition:
+            background-color 200ms var(--ease-out-quart),
+            border-color 200ms var(--ease-out-quart);
+    }
+
+    .site-header[data-scrolled] {
+        @apply border-line;
+        background-color: color-mix(in oklab, var(--yl-canvas) 86%, transparent);
+        backdrop-filter: saturate(1.4) blur(12px);
+    }
+
+    .brand-mark {
+        @apply grid size-8 shrink-0 place-items-center rounded-lg bg-ink text-sm leading-none font-semibold text-on-ink;
+    }
+
+    .btn {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium whitespace-nowrap;
+        transition:
+            background-color 150ms var(--ease-out-quart),
+            border-color 150ms var(--ease-out-quart),
+            transform 150ms var(--ease-out-quart);
+
+        &:active {
+            transform: translateY(1px);
+        }
+    }
+
+    .btn-primary {
+        @apply bg-ink text-on-ink hover:bg-ink-soft;
+    }
+
+    .btn-quiet {
+        @apply border border-line bg-raised text-ink hover:border-line-strong;
+    }
+
+    .icon-btn {
+        @apply grid size-11 place-items-center rounded-lg text-muted hover:bg-sunken hover:text-ink;
+        transition: background-color 150ms var(--ease-out-quart);
+    }
+
+    /* Form fields: one border, one focus ring, no stacked outlines. */
+    .field-label {
+        @apply mb-1.5 block text-sm font-medium text-ink;
+    }
+
+    .field-control {
+        @apply relative flex min-h-12 items-center rounded-lg border border-line-strong/60 bg-raised;
+        transition:
+            border-color 150ms var(--ease-out-quart),
+            box-shadow 150ms var(--ease-out-quart);
+
+        &:hover {
+            @apply border-line-strong;
+        }
+
+        &:has(input:focus-visible) {
+            @apply border-ink;
+            box-shadow: 0 0 0 1px var(--yl-ink);
+        }
+
+        &[data-invalid] {
+            @apply border-danger;
+        }
+
+        & input {
+            @apply h-12 w-full min-w-0 bg-transparent px-3.5 text-base text-ink outline-none placeholder:text-muted;
+        }
+    }
+
+    .field-error {
+        @apply mt-1.5 flex items-start gap-1.5 text-sm text-danger;
+    }
+
+    /* Store type choice: a native radio, the whole tile is the hit area. */
+    .type-option {
+        @apply relative flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-raised p-3.5;
+        transition:
+            border-color 150ms var(--ease-out-quart),
+            background-color 150ms var(--ease-out-quart);
+
+        &:hover {
+            @apply border-line-strong;
+        }
+
+        &:has(input:checked) {
+            @apply border-ink bg-sunken;
+            box-shadow: 0 0 0 1px var(--yl-ink);
+        }
+
+        &:has(input:focus-visible) {
+            outline: 2px solid var(--yl-ink);
+            outline-offset: 2px;
+        }
+
+        & input {
+            @apply mt-0.5 size-4 shrink-0 accent-current;
+        }
+    }
+
+    /* The receipt: real paper in both themes, torn at the bottom. */
+    .receipt {
+        @apply relative bg-paper text-paper-ink;
+        --tooth: 9px;
+        padding-bottom: calc(var(--tooth) + 1.25rem);
+        mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(var(--tooth) * 2) 100%;
+    }
+
+    .receipt-rule {
+        @apply border-t border-dashed border-paper-ink/25;
+    }
+
+    .receipt-shadow {
+        filter: drop-shadow(0 1px 1px rgb(24 24 27 / 0.08)) drop-shadow(0 18px 28px rgb(24 24 27 / 0.14));
+    }
+
+    :root.dark .receipt-shadow {
+        filter: drop-shadow(0 22px 40px rgb(0 0 0 / 0.55));
+    }
+
+    /* The printer slot the receipt feeds out of. */
+    .printer-slot {
+        @apply relative z-10 h-3 rounded-full bg-ink;
+        box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.35);
+    }
+
+    :root.dark .printer-slot {
+        @apply bg-zinc-800;
+    }
+
+    /* Day timeline: a vertical rail on phones, one horizontal rail from lg. */
+    .day-step {
+        @apply relative ps-8 pb-10 last:pb-0 lg:ps-0 lg:pt-10 lg:pb-0;
+
+        &::before {
+            content: '';
+            @apply absolute top-1 bottom-0 start-[0.4375rem] w-px bg-line;
+        }
+
+        &::after {
+            content: '';
+            @apply absolute start-0 top-1 size-[0.9375rem] rounded-full border-2 border-ink bg-canvas;
+        }
+
+        &:last-child::before {
+            @apply hidden;
+        }
+
+        &:last-child::after {
+            @apply border-profit bg-profit;
+        }
+
+        @media (width >= 64rem) {
+            &::before {
+                inset-block: 0.4375rem auto;
+                inset-inline: 0 -2rem;
+                width: auto;
+                height: 1px;
+            }
+
+            &::after {
+                top: 0;
+            }
+        }
+    }
+}
+
+/*
+ * The one orchestrated moment: the end-of-day report prints line by line on
+ * load. Content is fully visible without animation (reduced motion, no CSS anim).
+ */
+@media (prefers-reduced-motion: no-preference) {
+    .receipt-feed {
+        animation: receipt-feed 1600ms steps(16, end) 350ms both;
+    }
+
+    .receipt-total {
+        animation: receipt-settle 500ms var(--ease-out-quart) 2000ms both;
+    }
+
+    .password-toggle svg {
+        transition: opacity 150ms var(--ease-out-quart);
+    }
+}
+
+@keyframes receipt-feed {
+    from {
+        clip-path: inset(0 0 100% 0);
+        transform: translateY(-2.5rem);
+    }
+
+    to {
+        clip-path: inset(0 0 0 0);
+        transform: translateY(0);
+    }
+}
+
+@keyframes receipt-settle {
+    from {
+        background-color: color-mix(in oklab, #047857 14%, transparent);
+    }
+
+    to {
+        background-color: transparent;
+    }
 }

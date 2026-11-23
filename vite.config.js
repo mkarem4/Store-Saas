@@ -8,9 +8,17 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/filament/yulio/theme.css', 'resources/css/filament/admin/theme.css'],
             refresh: true,
+            // Self-hosted at build time; same families as the Filament panels.
             fonts: [
-                bunny('Instrument Sans', {
+                bunny('Geist', {
                     weights: [400, 500, 600],
+                    subsets: ['latin'],
+                    preload: [{ weight: 400 }, { weight: 600 }],
+                }),
+                bunny('Readex Pro', {
+                    weights: [400, 500, 600],
+                    subsets: ['arabic', 'latin'],
+                    preload: false,
                 }),
             ],
         }),
