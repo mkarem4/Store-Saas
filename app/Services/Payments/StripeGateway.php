@@ -61,7 +61,9 @@ class StripeGateway implements PaymentGateway
             return;
         }
 
-        $this->client->paymentIntents->capture($order->payment_intent_id);
+        $this->client->paymentIntents->capture($order->payment_intent_id, [], [
+            'idempotency_key' => 'capture-'.$order->payment_intent_id,
+        ]);
     }
 
     public function void(Order $order): void
@@ -70,7 +72,9 @@ class StripeGateway implements PaymentGateway
             return;
         }
 
-        $this->client->paymentIntents->cancel($order->payment_intent_id);
+        $this->client->paymentIntents->cancel($order->payment_intent_id, [], [
+            'idempotency_key' => 'void-'.$order->payment_intent_id,
+        ]);
     }
 
     public function refund(Order $order, int $amountCents): ?string

@@ -156,6 +156,69 @@ it('blocks unauthenticated order access', function (): void {
     $this->postJson('/api/v1/orders', [])->assertUnauthorized();
 });
 
+it('only replays an order for its customer and store', function (): void {
+    [$business, , $variant] = apiBusinessWithVariant();
+    [$otherBusiness, , $otherVariant] = apiBusinessWithVariant();
+    $customer = Customer::factory()->create();
+    $otherCustomer = Customer::factory()->create();
+    $payload = [
+        'business' => $business->slug,
+        'fulfillment' => 'pickup',
+        'items' => [['variant_id' => $variant->id, 'qty' => 1]],
+    ];
+    $headers = ['Idempotency-Key' => 'customer-order-retry'];
+
+    $order = $this->actingAs($customer, 'customer')->postJson('/api/v1/orders', $payload, $headers)
+        ->assertCreated();
+
+    $this->postJson('/api/v1/orders', $payload, $headers)
+        ->assertCreated()
+        ->assertJsonPath('data.number', $order->json('data.number'));
+
+    $this->postJson('/api/v1/orders', [
+        ...$payload,
+        'business' => $otherBusiness->slug,
+        'items' => [['variant_id' => $otherVariant->id, 'qty' => 1]],
+    ], $headers)->assertUnprocessable();
+
+    $this->actingAs($otherCustomer, 'customer')->postJson('/api/v1/orders', $payload, $headers)
+        ->assertUnprocessable()
+        ->assertJsonMissingPath('data');
+
+    $url = '/api/v1/orders/'.$order->json('data.number');
+    $this->getJson($url)->assertNotFound();
+    $this->postJson($url.'/cancel')->assertNotFound();
+    $this->assertDatabaseCount('orders', 1);
+});
+
+it('uses the store to disambiguate matching order numbers for one customer', function (): void {
+    [$business, , $variant] = apiBusinessWithVariant();
+    [$otherBusiness, , $otherVariant] = apiBusinessWithVariant();
+    $this->actingAs(Customer::factory()->create(), 'customer');
+
+    $number = $this->postJson('/api/v1/orders', [
+        'business' => $business->slug,
+        'fulfillment' => 'pickup',
+        'items' => [['variant_id' => $variant->id, 'qty' => 1]],
+    ])->assertCreated()->json('data.number');
+
+    $this->postJson('/api/v1/orders', [
+        'business' => $otherBusiness->slug,
+        'fulfillment' => 'pickup',
+        'items' => [['variant_id' => $otherVariant->id, 'qty' => 1]],
+    ])->assertCreated()->assertJsonPath('data.number', $number);
+
+    $url = '/api/v1/orders/'.$number;
+    $this->getJson($url)->assertConflict();
+    $this->postJson($url.'/cancel')->assertConflict();
+    $this->getJson($url.'?business='.$business->slug)->assertOk()->assertJsonPath('data.business', $business->slug);
+    $this->postJson($url.'/cancel?business='.$otherBusiness->slug)
+        ->assertOk()
+        ->assertJsonPath('data.business', $otherBusiness->slug)
+        ->assertJsonPath('data.status', 'cancelled');
+    $this->getJson($url.'?business='.$business->slug)->assertOk()->assertJsonPath('data.status', 'pending');
+});
+
 it('manages customer addresses with ownership checks', function (): void {
     $owner = Customer::factory()->create();
     $other = Customer::factory()->create();

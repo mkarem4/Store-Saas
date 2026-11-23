@@ -91,11 +91,7 @@ class OrderController extends Controller
 
     public function show(Request $request, string $number): JsonResponse
     {
-        $order = $request->user()
-            ->orders()
-            ->where('number', $number)
-            ->with(['items.modifiers', 'statusHistory'])
-            ->firstOrFail();
+        $order = $this->customerOrder($request, $number)->load(['items.modifiers', 'statusHistory']);
 
         return response()->json([
             'data' => $this->transform($order, true),
@@ -104,7 +100,7 @@ class OrderController extends Controller
 
     public function cancel(Request $request, string $number): JsonResponse
     {
-        $order = $request->user()->orders()->where('number', $number)->firstOrFail();
+        $order = $this->customerOrder($request, $number);
 
         try {
             $order = $this->orders->cancelByCustomer($order);
@@ -115,6 +111,23 @@ class OrderController extends Controller
         return response()->json([
             'data' => $this->transform($order),
         ]);
+    }
+
+    private function customerOrder(Request $request, string $number): Order
+    {
+        $data = $request->validate(['business' => ['sometimes', 'required', 'string', 'max:255']]);
+        $orders = $request->user()->orders()->where('number', $number);
+
+        if (isset($data['business'])) {
+            $orders->whereRelation('business', 'slug', $data['business']);
+        }
+
+        $matches = $orders->limit(2)->get();
+
+        abort_if($matches->isEmpty(), 404);
+        abort_if($matches->count() > 1, 409, __('Specify the store to identify this order.'));
+
+        return $matches->firstOrFail();
     }
 
     /**

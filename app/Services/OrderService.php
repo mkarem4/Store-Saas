@@ -200,11 +200,14 @@ class OrderService
         if ($idempotencyKey !== null) {
             $existing = Order::query()
                 ->withoutGlobalScope('business')
-                ->where('business_id', $business->id)
                 ->where('idempotency_key', $idempotencyKey)
                 ->first();
 
             if ($existing !== null) {
+                if ((int) $existing->customer_id !== (int) $customer->id || (int) $existing->business_id !== (int) $business->id) {
+                    throw new InvalidArgumentException(__('This idempotency key is unavailable.'));
+                }
+
                 return $existing->load('items.modifiers');
             }
         }
