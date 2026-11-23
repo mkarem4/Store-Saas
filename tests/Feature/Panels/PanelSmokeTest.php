@@ -92,3 +92,14 @@ it('renders the tenant sidebar on the store and staff profile pages', function (
         ->assertOk()
         ->assertSee(url("{$panel}/{$business->slug}/"), false);
 })->with(['business', 'staff'])->group('panels');
+
+it('rejects a direct panel URL for another store', function (string $panel): void {
+    $business = Business::factory()->create();
+    $foreignBusiness = Business::factory()->create();
+    $user = match ($panel) {
+        'business' => User::factory()->businessOwner($business)->create(),
+        'staff' => User::factory()->staff($business)->create(),
+    };
+
+    $this->actingAs($user)->get("/{$panel}/{$foreignBusiness->slug}")->assertNotFound();
+})->with(['business', 'staff'])->group('panels');

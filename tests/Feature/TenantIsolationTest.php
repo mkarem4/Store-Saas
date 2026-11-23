@@ -5,6 +5,7 @@ use App\Models\Employee;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Sale;
+use App\Models\User;
 use App\Support\BusinessContext;
 
 it('scopes products to the current business context', function (): void {
@@ -67,4 +68,18 @@ it('scopes employees to the current business context', function (): void {
     BusinessContext::run($businessB->id, function (): void {
         expect(Employee::query()->count())->toBe(1);
     });
+});
+
+it('only serves printable and PDF receipts to users from the sale business', function (): void {
+    $business = Business::factory()->create();
+    $user = User::factory()->businessOwner($business)->create();
+    $ownSale = Sale::factory()->create(['business_id' => $business->id]);
+    $foreignSale = Sale::factory()->create();
+
+    $this->actingAs($user);
+
+    $this->get(route('receipts.show', $ownSale))->assertOk()->assertSee($ownSale->number);
+    $this->get(route('receipts.pdf', $ownSale))->assertDownload($ownSale->number.'.pdf');
+    $this->get(route('receipts.show', $foreignSale))->assertNotFound();
+    $this->get(route('receipts.pdf', $foreignSale))->assertNotFound();
 });
