@@ -1,11 +1,14 @@
 <?php
 
+use App\Enums\BusinessStatus;
 use App\Enums\PayoutStatus;
 use App\Enums\UserRole;
 use App\Filament\Admin\Pages\PlatformSettings;
 use App\Filament\Admin\Resources\Businesses\Pages\CreateBusiness;
+use App\Filament\Admin\Resources\Businesses\Pages\ListBusinesses;
 use App\Filament\Admin\Resources\PayoutRequests\Pages\ListPayoutRequests;
 use App\Filament\Admin\Resources\TaxRates\Pages\ManageTaxRates;
+use App\Filament\Admin\Widgets\PlatformStats;
 use App\Models\Business;
 use App\Models\BusinessType;
 use App\Models\ExpenseCategory;
@@ -56,6 +59,20 @@ it('creates a store together with its owner account (scenario 1)', function (): 
         ->and($owner->must_change_password)->toBeTrue()
         ->and($business->expenses()->getRelated()->newQuery()->count())->toBe(0)
         ->and(ExpenseCategory::query()->where('business_id', $business->id)->count())->toBe(9);
+});
+
+it('shows the inactive store count and filters the list for activation review', function (): void {
+    $inactive = Business::factory()->create(['status' => BusinessStatus::Inactive]);
+    $active = Business::factory()->create(['status' => BusinessStatus::Active]);
+
+    Livewire::test(PlatformStats::class)
+        ->assertSee(__('Inactive stores'))
+        ->assertSee('filters%5Bstatus%5D%5Bvalue%5D=inactive', false);
+
+    Livewire::withQueryParams(['filters' => ['status' => ['value' => BusinessStatus::Inactive->value]]])
+        ->test(ListBusinesses::class)
+        ->assertCanSeeTableRecords([$inactive])
+        ->assertCanNotSeeTableRecords([$active]);
 });
 
 it('manages regional tax rates', function (): void {

@@ -274,6 +274,27 @@ it('saves store settings', function (): void {
         ->and($business->allowed_ips)->toBe(['10.0.0.0/24']);
 });
 
+it('updates the current store profile when order and delivery settings are hidden', function (): void {
+    [$business] = storeOwner('car_showroom');
+    $other = Business::factory()->create(['phone' => '555-0101']);
+    $settings = $business->settings;
+
+    Livewire::test(StoreSettings::class)
+        ->fillForm([
+            'name' => ['en' => 'Cedar Motors', 'ar' => 'سيدار للسيارات'],
+            'phone' => '555-0102',
+            'email' => 'sales@cedar.test',
+            'city' => 'Chicago',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($business->fresh()->translated('name', 'en'))->toBe('Cedar Motors')
+        ->and($business->fresh()->email)->toBe('sales@cedar.test')
+        ->and($business->fresh()->settings('working_hours'))->toEqual($settings['working_hours'])
+        ->and($other->fresh()->phone)->toBe('555-0101');
+});
+
 it('keeps each store\'s records private (data isolation)', function (): void {
     [$mine] = storeOwner('clothing');
     $other = Business::factory()->create();

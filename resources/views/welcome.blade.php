@@ -4,41 +4,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('Register your store') }} | {{ config('app.name') }}</title>
-    @vite('resources/css/app.css')
+    <link rel="stylesheet" href="landing.css">
 </head>
-<body class="min-h-screen bg-stone-100 text-stone-900 antialiased">
-    <header class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-6">
-        <a href="{{ route('home') }}" class="text-xl font-bold">{{ config('app.name') }}</a>
-        <nav class="flex items-center gap-5 text-sm font-semibold">
-            <a href="{{ route('locale.switch', app()->isLocale('ar') ? 'en' : 'ar') }}">{{ app()->isLocale('ar') ? 'English' : 'العربية' }}</a>
-            <a href="{{ route('filament.business.auth.login') }}">{{ __('Store sign-in') }}</a>
+<body>
+    <header class="site-header shell">
+        <a href="{{ route('home') }}" class="brand">
+            <span class="brand-mark" aria-hidden="true"><x-heroicon-o-building-storefront /></span>
+            {{ config('app.name') }}
+        </a>
+        <nav aria-label="{{ __('Navigation') }}">
+            <a class="locale" href="{{ route('locale.switch', app()->isLocale('ar') ? 'en' : 'ar') }}" lang="{{ app()->isLocale('ar') ? 'en' : 'ar' }}">{{ app()->isLocale('ar') ? 'English' : 'العربية' }}</a>
+            <a class="sign-in" href="{{ route('filament.business.auth.login') }}">{{ __('Store sign-in') }}</a>
         </nav>
     </header>
 
-    <main class="mx-auto grid max-w-6xl overflow-hidden bg-white lg:my-8 lg:grid-cols-2 lg:rounded-3xl">
-        <section class="flex flex-col justify-center bg-emerald-950 px-8 py-14 text-white sm:px-14 lg:py-24">
-            <h1 class="max-w-lg text-4xl leading-tight font-bold sm:text-6xl">{{ __('Run your store from one place') }}</h1>
-            <p class="mt-6 max-w-md text-lg text-emerald-100">{{ __('Manage sales, inventory and your team from your store dashboard.') }}</p>
+    <main class="shell landing">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <h1 id="hero-title">{{ __('Run your shop, from checkout to closing time') }}</h1>
+                <p>{{ __('Sell at the counter, take pickup and delivery orders, and see what you made after stock costs, wages and expenses.') }}</p>
+                <a class="mobile-register" href="#registration">{{ __('Register your store') }}</a>
+                <a class="explore-link" href="#how-it-works">{{ __('See how it works') }}</a>
+            </div>
+
+            <figure class="preview">
+                <figcaption>{{ __('Example sale') }}</figcaption>
+                <div class="sale-preview">
+                    <div class="sale-details">
+                        <div class="sale-status"><x-heroicon-o-check-circle aria-hidden="true" /> {{ __('Sale recorded') }}</div>
+                        <p class="sale-total"><bdi>$46.00</bdi></p>
+                        <dl class="stock-change">
+                            <div><dt>{{ __('Product') }}</dt><dd>{{ __('Cedar perfume') }}</dd></div>
+                            <div><dt>{{ __('Units in stock') }}</dt><dd><bdi>18 → 16</bdi></dd></div>
+                        </dl>
+                    </div>
+                    <div class="receipt">
+                        <div class="receipt-heading">
+                            <x-heroicon-o-receipt-percent aria-hidden="true" />
+                            <span>{{ __('Sales receipt') }}</span>
+                        </div>
+                        <span class="receipt-number"><bdi>#0148</bdi></span>
+                        <div class="receipt-line">
+                            <span>{{ __('Cedar perfume') }}</span>
+                            <span><bdi>2 × $23.00</bdi></span>
+                        </div>
+                        <div class="receipt-total"><span>{{ __('Total') }}</span><strong><bdi>$46.00</bdi></strong></div>
+                        <div class="barcode" aria-hidden="true"></div>
+                    </div>
+                </div>
+            </figure>
         </section>
 
-        <section class="px-8 py-12 sm:px-14" id="registration">
-            <h2 class="text-2xl font-bold">{{ __('Register your store') }}</h2>
+        <section class="registration" id="registration" aria-labelledby="registration-title">
+            <h2 id="registration-title">{{ __('Register your store') }}</h2>
+            <p class="form-intro">{{ __('Choose your business type to set up the right tools for your store.') }}</p>
+
             @if (session('registration_submitted'))
-                <p role="status" class="mt-5 rounded-lg bg-emerald-50 p-4 text-emerald-900">{{ __('Your store was registered and is awaiting activation. Once activated, sign in using your email and password.') }}</p>
+                <p role="status" class="form-status">{{ __('Your store was registered and is awaiting activation. Once activated, sign in using your email and password.') }}</p>
             @endif
 
-            <form method="POST" action="{{ route('business.registration') }}" class="mt-6 space-y-4">
+            <form method="POST" action="{{ route('business.registration') }}">
                 @csrf
-                <div>
-                    <label for="business_type_id" class="mb-1 block text-sm font-semibold">{{ __('Store type') }}</label>
-                    <select id="business_type_id" name="business_type_id" required class="w-full rounded-lg border border-stone-400 bg-white px-3 py-2.5 focus-visible:outline-2 focus-visible:outline-emerald-700">
+                <div class="field field-wide">
+                    <label for="business_type_id">{{ __('Store type') }}</label>
+                    <select id="business_type_id" name="business_type_id" required
+                        @error('business_type_id') aria-invalid="true" aria-describedby="business_type_id-error" @enderror>
                         <option value="">{{ __('Choose a store type') }}</option>
                         @foreach ($businessTypes as $type)
                             <option value="{{ $type->id }}" @selected((string) old('business_type_id') === (string) $type->id)>{{ $type->translatedName() }}</option>
                         @endforeach
                     </select>
                     @error('business_type_id')
-                        <p class="mt-1 text-sm text-red-700" role="alert">{{ $message }}</p>
+                        <p class="field-error" id="business_type_id-error" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -49,24 +86,104 @@
                     'password' => [__('Password'), 'password', 'new-password', 72],
                     'password_confirmation' => [__('Confirm password'), 'password', 'new-password', 72],
                 ] as $field => [$label, $type, $autocomplete, $maxLength])
-                    <div>
-                        <label for="{{ $field }}" class="mb-1 block text-sm font-semibold">{{ $label }}</label>
+                    <div @class(['field', 'field-wide' => $field === 'email'])>
+                        <label for="{{ $field }}">{{ $label }}</label>
                         <input id="{{ $field }}" name="{{ $field }}" type="{{ $type }}" autocomplete="{{ $autocomplete }}" maxlength="{{ $maxLength }}" required
                             @if ($type === 'password') minlength="8" @else value="{{ old($field) }}" @endif
-                            class="w-full rounded-lg border border-stone-400 px-3 py-2.5 focus-visible:outline-2 focus-visible:outline-emerald-700">
+                            @error($field) aria-invalid="true" aria-describedby="{{ $field }}-error" @enderror>
                         @error($field)
-                            <p class="mt-1 text-sm text-red-700" role="alert">{{ $message }}</p>
+                            <p class="field-error" id="{{ $field }}-error" role="alert">{{ $message }}</p>
                         @enderror
                     </div>
                 @endforeach
 
-                <button type="submit" @disabled($businessTypes->isEmpty()) class="w-full rounded-lg bg-emerald-900 px-4 py-3 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">{{ __('Register your store') }}</button>
+                <button class="field-wide" type="submit" @disabled($businessTypes->isEmpty())>{{ __('Register your store') }}</button>
 
                 @if ($businessTypes->isEmpty())
-                    <p class="text-sm text-stone-600">{{ __('Store registration is currently unavailable.') }}</p>
+                    <p class="form-status field-wide">{{ __('Store registration is currently unavailable.') }}</p>
                 @endif
             </form>
+            <p class="activation-note">{{ __('You can sign in after your store is activated.') }}</p>
         </section>
     </main>
+
+    <section class="operations" id="how-it-works" aria-labelledby="operations-title">
+        <div class="shell operations-layout">
+            <div class="section-intro">
+                <h2 id="operations-title">{{ __('One working day, from sale to profit') }}</h2>
+                <p>{{ __('Counter sales and app orders feed into the same store records, so you can follow each sale through to the end of the day.') }}</p>
+            </div>
+            <div class="workflows">
+                <article class="workflow">
+                    <x-heroicon-o-calculator aria-hidden="true" />
+                    <div><h3>{{ __('Sell at the counter') }}</h3><p>{{ __('Record cash, card or split payments, print receipts and handle returns.') }}</p></div>
+                </article>
+                <article class="workflow">
+                    <x-heroicon-o-shopping-bag aria-hidden="true" />
+                    <div><h3>{{ __('Handle pickup and delivery') }}</h3><p>{{ __('Accept or decline app orders, set delivery fees by distance, and track payouts in your store wallet.') }}</p></div>
+                </article>
+                <article class="workflow">
+                    <x-heroicon-o-archive-box aria-hidden="true" />
+                    <div><h3>{{ __('Know what’s in stock') }}</h3><p>{{ __('Receive supplier stock, track what sells, and see which items need reordering.') }}</p></div>
+                </article>
+                <article class="workflow">
+                    <x-heroicon-o-user-group aria-hidden="true" />
+                    <div><h3>{{ __('Manage shifts and payroll') }}</h3><p>{{ __('Give each employee their own login and role, review clock-ins, and track wages and commissions.') }}</p></div>
+                </article>
+                <article class="workflow">
+                    <x-heroicon-o-chart-bar aria-hidden="true" />
+                    <div><h3>{{ __('See what the shop earned') }}</h3><p>{{ __('Compare sales channels and review costs, expenses and net profit. Export reports to Excel or PDF.') }}</p></div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    @if ($businessTypes->isNotEmpty())
+        <section class="shell store-types" aria-labelledby="types-title">
+            <div class="section-intro">
+                <h2 id="types-title">{{ __('Tools that fit your type of shop') }}</h2>
+                <p>{{ __('A grocery shop tracks stock differently from a car showroom. Your store type determines the tools and fields in your dashboard.') }}</p>
+            </div>
+            <ul class="type-list">
+                @foreach ($businessTypes as $businessType)
+                    <li>
+                        <h3>{{ $businessType->translatedName() }}</h3>
+                        @if ($detail = match ($businessType->key) {
+                            'perfume' => __('Track bottles, variants and stock.'),
+                            'grocery' => __('Sell by item, case or weight.'),
+                            'car_showroom' => __('Track VINs, vehicle costs and buyer inquiries.'),
+                            'car_rental' => __('Track availability, rental contracts and deposits.'),
+                            'clothing' => __('Manage stock by size and colour.'),
+                            'electronics' => __('Track serial numbers and device inventory.'),
+                            'jewelry' => __('Track weight, gold prices and making charges.'),
+                            'restaurant' => __('Manage menu items, extras and order preparation.'),
+                            default => null,
+                        })
+                            <p>{{ $detail }}</p>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+    <section class="shell access-section" aria-labelledby="access-title">
+        <div class="section-intro">
+            <h2 id="access-title">{{ __('A workspace for each shop') }}</h2>
+            <p>{{ __('Each shop has its own inventory, sales and staff accounts.') }}</p>
+        </div>
+        <dl class="access-list">
+            <div><dt>{{ __('Platform administrator') }}</dt><dd>{{ __('Reviews store registrations, activates shops and manages platform commission.') }}</dd></div>
+            <div><dt>{{ __('Store owner') }}</dt><dd>{{ __('Runs the store, reviews its numbers and sets staff permissions.') }}</dd></div>
+            <div><dt>{{ __('Staff') }}</dt><dd>{{ __('Signs in to record sales or clock in, depending on the role assigned.') }}</dd></div>
+        </dl>
+        <div class="bottom-cta">
+            <p>{{ __('Register your shop, then sign in once it’s activated.') }}</p>
+            <a class="primary-link" href="#registration">{{ __('Register your store') }}</a>
+        </div>
+    </section>
+    <footer class="shell site-footer">
+        <span>{{ config('app.name') }}</span>
+        <a href="{{ route('filament.business.auth.login') }}">{{ __('Store sign-in') }}</a>
+    </footer>
 </body>
 </html>

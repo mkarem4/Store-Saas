@@ -23,7 +23,7 @@ class PlatformStats extends StatsOverviewWidget
 
     protected function getColumns(): int|array|null
     {
-        return ['md' => 3, 'xl' => 5];
+        return ['md' => 3, 'xl' => 6];
     }
 
     protected function getStats(): array
@@ -40,9 +40,13 @@ class PlatformStats extends StatsOverviewWidget
 
         $openPayouts = PayoutRequest::query()->withoutGlobalScope('business')->whereIn('status', [PayoutStatus::Requested, PayoutStatus::Approved]);
         $openCount = (clone $openPayouts)->count();
+        $inactiveStores = Business::query()->where('status', BusinessStatus::Inactive)->count();
 
-        // Payout requests are the platform's to-do list, so they come first and link to the review screen.
         return [
+            Stat::make(__('Inactive stores'), $inactiveStores)
+                ->description(__('Review store details before activation'))
+                ->color($inactiveStores > 0 ? 'warning' : 'gray')
+                ->url(BusinessResource::getUrl(parameters: ['filters' => ['status' => ['value' => BusinessStatus::Inactive->value]]])),
             Stat::make(__('Payouts to review'), $openCount)
                 ->description($openCount > 0 ? Money::format((int) (clone $openPayouts)->sum('amount_cents')) : __('All caught up'))
                 ->color($openCount > 0 ? 'warning' : 'gray')

@@ -5,6 +5,7 @@ namespace App\Filament\Business\Pages;
 use App\Enums\AttendanceMode;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
+use App\Filament\Support\Fields;
 use App\Filament\Support\SettingsPage;
 use App\Support\Permission;
 use BackedEnum;
@@ -71,6 +72,13 @@ class StoreSettings extends SettingsPage
         }
 
         return [
+            'name' => ['en' => $business->translated('name', 'en'), 'ar' => $business->translated('name', 'ar')],
+            'phone' => $business->phone,
+            'email' => $business->email,
+            'website' => $business->website,
+            'address_line' => $business->address_line,
+            'city' => $business->city,
+            'postal_code' => $business->postal_code,
             'pickup_enabled' => (bool) $business->settings('pickup_enabled'),
             'delivery_enabled' => (bool) $business->settings('delivery_enabled'),
             'minimum_order_cents' => (int) $business->settings('minimum_order_cents', 0),
@@ -92,7 +100,10 @@ class StoreSettings extends SettingsPage
 
     protected function persist(array $data): void
     {
+        abort_unless(static::canAccess(), 403);
+
         $business = BusinessPanel::business();
+        $data += $this->loadData();
         $hours = [];
 
         foreach (self::DAYS as $day) {
@@ -101,6 +112,13 @@ class StoreSettings extends SettingsPage
         }
 
         $business->fill([
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'email' => $data['email'],
+            'website' => $data['website'],
+            'address_line' => $data['address_line'],
+            'city' => $data['city'],
+            'postal_code' => $data['postal_code'],
             'latitude' => $data['latitude'],
             'longitude' => $data['longitude'],
             'attendance_mode' => $data['attendance_mode'],
@@ -136,6 +154,17 @@ class StoreSettings extends SettingsPage
         $gpsMode = fn (Get $get): bool => in_array(($get('attendance_mode') instanceof AttendanceMode ? $get('attendance_mode') : AttendanceMode::tryFrom((string) $get('attendance_mode'))), [AttendanceMode::Gps, AttendanceMode::Both, AttendanceMode::Either], true);
 
         return $schema->components([
+            Section::make(__('Store profile'))->aside()->columns(2)
+                ->description(__('Update your store name and contact details.'))
+                ->schema([
+                    Fields::translatable('name', __('Store name')),
+                    TextInput::make('phone')->label(__('Phone'))->tel()->maxLength(255),
+                    TextInput::make('email')->label(__('Email'))->email()->maxLength(255),
+                    TextInput::make('website')->label(__('Website'))->url()->maxLength(255)->columnSpanFull(),
+                    TextInput::make('address_line')->label(__('Address'))->maxLength(255)->columnSpanFull(),
+                    TextInput::make('city')->label(__('City'))->maxLength(255),
+                    TextInput::make('postal_code')->label(__('Postal code'))->maxLength(255),
+                ]),
             Section::make(__('App orders'))->aside()->description(__('How customers order from you in the app.'))->columns(2)->visible($sellsInApp)->schema([
                 Toggle::make('pickup_enabled')->label(__('Pickup')),
                 Toggle::make('delivery_enabled')->label(__('Delivery'))->live(),
