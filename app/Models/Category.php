@@ -20,6 +20,7 @@ class Category extends Model
         'slug',
         'sort_order',
         'is_active',
+        'fields',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class Category extends Model
         return [
             'name' => 'array',
             'is_active' => 'boolean',
+            'fields' => 'array',
         ];
     }
 

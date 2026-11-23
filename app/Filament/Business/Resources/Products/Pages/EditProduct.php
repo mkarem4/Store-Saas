@@ -11,6 +11,13 @@ class EditProduct extends EditRecord
 {
     protected static string $resource = ProductResource::class;
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['attributes'] = array_replace_recursive($this->getRecord()->attributes ?? [], $data['attributes'] ?? []);
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [MoreActions::make([DeleteAction::make()])];

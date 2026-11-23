@@ -874,6 +874,8 @@
     "Nothing matches the current search or filters.": "لا شيء يطابق البحث أو الفلاتر الحالية.",
     "Organisation": "التنظيم",
     "Specifications": "المواصفات",
+    "Category specifications": "مواصفات الفئة",
+    "These fields appear when this category is selected on a product.": "تظهر هذه الحقول عند اختيار الفئة في نموذج المنتج.",
     "The customer's card is charged :amount now. Start preparing once you accept.": "سيتم خصم :amount من بطاقة العميل الآن. ابدأ التحضير بعد القبول.",
     "Up to 8 photos. The first one is shown in lists and the app.": "حتى 8 صور. تظهر الأولى في القوائم وفي التطبيق.",
     "Awaiting payment": "بانتظار الدفع",

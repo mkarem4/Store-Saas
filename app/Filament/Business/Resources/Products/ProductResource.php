@@ -19,6 +19,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -65,7 +66,7 @@ class ProductResource extends BusinessResource
         $type = BusinessPanel::business()?->businessType;
         $isRestaurant = $type?->key === BusinessTypeKey::Restaurant->value;
         // Type fields that duplicate real product or variant columns are left out, so nothing is asked twice.
-        $typeFields = TypeFields::components($type, except: [
+        $typeFields = TypeFields::components($type?->fields ?? [], except: [
             'prep_time_minutes', 'is_available', 'modifiers', 'has_modifiers', 'is_published', 'track_stock',
             'sku', 'barcode', 'unit', 'low_stock_threshold', 'expiry_date',
             'pricing_mode', 'weight_g', 'karat', 'metal', 'making_value', 'certificate_number',
@@ -87,6 +88,20 @@ class ProductResource extends BusinessResource
                     ->statePath('variant')
                     ->schema(VariantForm::components(creating: true)),
                 Section::make(__('Specifications'))->columns(2)->schema($typeFields)->visible($typeFields !== []),
+                Group::make()->schema(function (Get $get): array {
+                    $categoryId = $get('category_id');
+
+                    if (! is_numeric($categoryId)) {
+                        return [];
+                    }
+
+                    $category = Category::query()
+                        ->where('business_id', BusinessPanel::business()?->id)
+                        ->find($categoryId);
+                    $fields = TypeFields::components($category?->fields ?? [], "attributes.category_{$categoryId}");
+
+                    return $fields === [] ? [] : [Section::make(__('Category specifications'))->columns(2)->schema($fields)];
+                }),
             ])->columnSpan(['lg' => 2]),
             Group::make([
                 Section::make(__('Status'))->schema([
@@ -99,7 +114,10 @@ class ProductResource extends BusinessResource
                 Section::make(__('Organisation'))->schema([
                     Select::make('category_id')->label(__('Category'))
                         ->options(fn (): array => Category::query()->orderBy('sort_order')->get()->mapWithKeys(fn (Category $category): array => [$category->id => $category->translatedName()])->all())
-                        ->searchable(),
+                        ->searchable()
+                        ->rule('integer')
+                        ->scopedExists(Category::class, 'id', fn (Builder $query): Builder => $query->where('business_id', BusinessPanel::business()?->id))
+                        ->live(),
                     TextInput::make('prep_time_minutes')->label(__('Preparation time (min)'))->integer()->minValue(0)->visible($isRestaurant),
                 ]),
             ])->columnSpan(['lg' => 1]),

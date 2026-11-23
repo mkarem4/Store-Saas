@@ -59,6 +59,9 @@ class CategoryResource extends BusinessResource
                 ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule) => $rule->where('business_id', BusinessPanel::business()?->id)),
             TextInput::make('sort_order')->label(__('Display order'))->helperText(__('Lower numbers appear first.'))->integer()->default(0),
             Toggle::make('is_active')->label(__('Shown in the app'))->default(true),
+            Fields::productSpecifications(__('Category specifications'))
+                ->helperText(__('These fields appear when this category is selected on a product.'))
+                ->defaultItems(0),
         ]);
     }
 

@@ -10,6 +10,7 @@ use App\Filament\Business\Resources\Employees\Pages\CreateEmployee;
 use App\Filament\Business\Resources\Employees\Pages\ListEmployees;
 use App\Filament\Business\Resources\Orders\Pages\ListOrders;
 use App\Filament\Business\Resources\Products\Pages\CreateProduct;
+use App\Filament\Business\Resources\Products\Pages\EditProduct;
 use App\Filament\Business\Resources\Products\Pages\ListProducts;
 use App\Filament\Business\Resources\Products\ProductResource;
 use App\Filament\Business\Resources\PurchaseReceipts\Pages\CreatePurchaseReceipt;
@@ -17,6 +18,7 @@ use App\Filament\Business\Resources\Sales\SaleResource;
 use App\Filament\Staff\Pages\TimeClock;
 use App\Models\Business;
 use App\Models\BusinessType;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\PlatformSetting;
@@ -87,6 +89,68 @@ it('creates a product with its type fields and opening stock', function (): void
         ->and((float) $variant->stock_qty)->toBe(5.0)
         ->and($variant->product->attributes['size'])->toBe('M')
         ->and($variant->business_id)->toBe($business->id);
+});
+
+it('validates and saves specifications for the selected product category', function (): void {
+    [$business] = storeOwner('electronics');
+    Livewire::test(ManageCategories::class)->callAction('create', [
+        'name' => ['en' => 'Phones', 'ar' => 'موبايلات'],
+        'slug' => 'phones',
+        'fields' => [
+            ['key' => 'storage', 'label' => ['en' => 'Storage (GB)', 'ar' => 'سعة التخزين'], 'type' => 'number', 'required' => true],
+        ],
+    ])->assertHasNoActionErrors();
+    $phones = Category::query()->where('slug', 'phones')->sole();
+    $chargers = Category::query()->create([
+        'business_id' => $business->id,
+        'name' => ['en' => 'Chargers'],
+        'slug' => 'chargers',
+        'fields' => [
+            ['key' => 'watts', 'label' => ['en' => 'Power (W)'], 'type' => 'number'],
+        ],
+    ]);
+    $foreignCategory = Category::query()->create([
+        'business_id' => Business::factory()->create()->id,
+        'name' => ['en' => 'Foreign'],
+        'slug' => 'foreign',
+        'fields' => [
+            ['key' => 'secret', 'label' => ['en' => 'Foreign specification'], 'type' => 'text'],
+        ],
+    ]);
+    $storage = "attributes.category_{$phones->id}.storage";
+
+    Livewire::test(CreateProduct::class)
+        ->fillForm([
+            'name' => ['en' => 'Phone', 'ar' => 'هاتف'],
+            'category_id' => $foreignCategory->id,
+            'attributes.brand' => 'Example',
+            'variant' => ['sku' => 'PHONE', 'retail_price_cents' => '100.00'],
+        ])
+        ->assertDontSee('Foreign specification')
+        ->call('create')
+        ->assertHasFormErrors(['category_id'])
+        ->fillForm(['category_id' => $phones->id])
+        ->assertSee('Storage (GB)')
+        ->call('create')
+        ->assertHasFormErrors([$storage => 'required'])
+        ->fillForm([$storage => 128])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $product = Product::query()->sole();
+
+    Livewire::test(EditProduct::class, ['record' => $product->getRouteKey()])
+        ->assertFormSet([$storage => 128])
+        ->fillForm(['category_id' => $chargers->id])
+        ->assertDontSee('Storage (GB)')
+        ->assertSee('Power (W)')
+        ->fillForm(["attributes.category_{$chargers->id}.watts" => 45])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(data_get($product->fresh(), $storage))->toEqual(128)
+        ->and(data_get($product->fresh(), "attributes.category_{$chargers->id}.watts"))->toEqual(45)
+        ->and($product->fresh()->attributes['brand'])->toBe('Example');
 });
 
 it('receives stock through the receiving screen', function (): void {

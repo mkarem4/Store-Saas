@@ -8,14 +8,9 @@ use App\Filament\Support\Fields;
 use App\Models\BusinessType;
 use BackedEnum;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
@@ -66,28 +61,8 @@ class BusinessTypeResource extends Resource
             TextInput::make('sort_order')->label(__('Display order'))->helperText(__('Lower numbers appear first.'))->integer()->default(0),
             Fields::translatable('name', __('Name')),
             Toggle::make('is_active')->label(__('Active (shown in the app)'))->default(true)->columnSpanFull(),
-            Repeater::make('fields')
-                ->label(__('Product fields'))
-                ->helperText(__('Shown on the product form of every store of this type.'))
-                ->columnSpanFull()
-                ->collapsible()
-                ->itemLabel(fn (array $state): ?string => $state['label']['en'] ?? $state['key'] ?? null)
-                ->schema([
-                    Grid::make(4)->schema([
-                        TextInput::make('key')->label(__('Key'))->required()->alphaDash(),
-                        TextInput::make('label.en')->label(__('Label (English)'))->required(),
-                        TextInput::make('label.ar')->label(__('Label (Arabic)'))->required()->extraInputAttributes(['dir' => 'rtl']),
-                        Select::make('type')->label(__('Type'))->required()->live()->options([
-                            'text' => __('Text'),
-                            'number' => __('Number'),
-                            'select' => __('Choice'),
-                            'date' => __('Date'),
-                            'boolean' => __('Yes / no'),
-                        ]),
-                    ]),
-                    TagsInput::make('options')->label(__('Choices'))->visible(fn (Get $get): bool => $get('type') === 'select'),
-                    Toggle::make('required')->label(__('Required')),
-                ]),
+            Fields::productSpecifications(__('Product fields'))
+                ->helperText(__('Shown on the product form of every store of this type.')),
         ]);
     }
 

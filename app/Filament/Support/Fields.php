@@ -2,15 +2,47 @@
 
 namespace App\Filament\Support;
 
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
 
 /**
  * Shared form fragments for the three panels.
  */
 final class Fields
 {
+    public static function productSpecifications(string $label): Repeater
+    {
+        return Repeater::make('fields')
+            ->label($label)
+            ->columnSpanFull()
+            ->collapsible()
+            ->itemLabel(fn (array $state): ?string => $state['label']['en'] ?? $state['key'] ?? null)
+            ->schema([
+                Grid::make(4)->schema([
+                    TextInput::make('key')->label(__('Key'))->required()->alphaDash()->maxLength(64)->distinct(),
+                    TextInput::make('label.en')->label(__('Label (English)'))->required(),
+                    TextInput::make('label.ar')->label(__('Label (Arabic)'))->required()->extraInputAttributes(['dir' => 'rtl']),
+                    Select::make('type')->label(__('Type'))->required()->live()->options([
+                        'text' => __('Text'),
+                        'number' => __('Number'),
+                        'select' => __('Choice'),
+                        'date' => __('Date'),
+                        'boolean' => __('Yes / no'),
+                    ]),
+                ]),
+                TagsInput::make('options')->label(__('Choices'))
+                    ->required(fn (Get $get): bool => $get('type') === 'select')
+                    ->visible(fn (Get $get): bool => $get('type') === 'select'),
+                Toggle::make('required')->label(__('Required')),
+            ]);
+    }
+
     /**
      * English + Arabic inputs for a JSON translatable attribute (S13).
      */
