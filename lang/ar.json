@@ -933,5 +933,9 @@
     "Status & type": "الحالة والنوع",
     "Contract": "العقد",
     "Add item": "إضافة صنف",
-    "Handover": "التسليم والاستلام"
+    "Handover": "التسليم والاستلام",
+    "Leave without saving?": "المغادرة دون حفظ؟",
+    "Your changes on this page have not been saved. If you leave now, they will be lost.": "لم تُحفظ تغييراتك في هذه الصفحة، وستضيع إذا غادرت الآن.",
+    "Keep editing": "متابعة التعديل",
+    "Leave without saving": "المغادرة دون حفظ"
 }

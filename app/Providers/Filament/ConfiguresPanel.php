@@ -97,6 +97,8 @@ trait ConfiguresPanel
             ->discoverPages(in: app_path("Filament/{$namespace}/Pages"), for: "App\\Filament\\{$namespace}\\Pages")
             ->discoverWidgets(in: app_path("Filament/{$namespace}/Widgets"), for: "App\\Filament\\{$namespace}\\Widgets")
             ->renderHook(PanelsRenderHook::BODY_START, fn (): string => view('filament.partials.impersonation-banner')->render())
+            // Designed unsaved-changes dialog and dialog scrolling (loaded before Alpine starts).
+            ->renderHook(PanelsRenderHook::SCRIPTS_AFTER, fn (): string => view('filament.partials.panel-scripts')->render())
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): string => filament()->hasTopbar() ? view('filament.partials.locale-switcher')->render() : '')
             ->renderHook(PanelsRenderHook::USER_MENU_PROFILE_AFTER, fn (): string => filament()->hasTopbar() ? '' : view('filament.partials.locale-menu')->render())
             ->middleware([

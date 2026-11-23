@@ -71,7 +71,7 @@ class SaleResource extends BusinessResource
         $currency = BusinessPanel::currency();
 
         return $schema->columns(1)->components([
-            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 2, 'lg' => 4])->schema([
                 TextEntry::make('number')->label(__('Receipt #')),
                 TextEntry::make('sold_at')->label(__('Date'))->dateTime(),
                 TextEntry::make('channel')->label(__('Channel'))->badge(),

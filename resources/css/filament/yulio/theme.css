@@ -210,15 +210,259 @@
     @apply text-gray-600 dark:text-gray-400;
 }
 
+/*
+ * Dialogs never grow past the screen: the header and the actions stay put
+ * and only the body scrolls (the page behind is already locked by Filament).
+ * A divider appears above and below the body only while it overflows.
+ */
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn {
+    @apply overflow-hidden;
+    grid-template-rows: 1fr auto 1fr;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn > .fi-modal-window {
+    max-height: calc(100dvh - 2rem);
+
+    & > .fi-modal-header,
+    & > .fi-modal-footer {
+        @apply shrink-0;
+    }
+
+    & > .fi-modal-content {
+        @apply min-h-0 overflow-y-auto overscroll-contain;
+        scrollbar-width: thin;
+    }
+
+    &[data-overflowing] {
+        & > .fi-modal-header {
+            @apply border-b border-gray-950/10 pb-4 dark:border-white/10;
+        }
+
+        & > .fi-modal-footer {
+            @apply border-t border-gray-950/10 pt-4 dark:border-white/10;
+        }
+    }
+}
+
+.fi-modal.fi-modal-slide-over > .fi-modal-window-ctn > .fi-modal-window {
+    @apply overscroll-contain;
+}
+
+/* The unsaved-changes dialog (resources/js/filament/panel.js) */
+.yl-leave-dialog {
+    @apply m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 text-gray-950 shadow-xl ring-1 ring-gray-950/5 dark:bg-gray-800 dark:text-white dark:ring-gray-700;
+
+    &::backdrop {
+        @apply bg-gray-950/50 dark:bg-gray-950/75;
+    }
+
+    &[open] {
+        animation: yl-dialog-in var(--yl-duration-base) var(--yl-ease);
+    }
+
+    &[open]::backdrop {
+        animation: yl-backdrop-in var(--yl-duration-base) var(--yl-ease);
+    }
+}
+
+.yl-leave-dialog-panel {
+    @apply grid gap-2 p-6;
+}
+
+.yl-leave-dialog-icon {
+    @apply mb-2 grid size-10 place-items-center rounded-full bg-warning-50 text-warning-600 dark:bg-warning-400/10 dark:text-warning-400;
+
+    & svg {
+        @apply size-5;
+    }
+}
+
+.yl-leave-dialog-title {
+    @apply text-base font-semibold;
+}
+
+.yl-leave-dialog-body {
+    @apply text-sm leading-6 text-gray-600 dark:text-gray-400;
+}
+
+.yl-leave-dialog-actions {
+    @apply mt-4 grid gap-3 sm:grid-cols-2;
+}
+
+.yl-leave-dialog-btn {
+    @apply inline-flex min-h-10 items-center justify-center rounded-lg px-4 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800;
+    transition: background-color var(--yl-duration-fast) var(--yl-ease), box-shadow var(--yl-duration-fast) var(--yl-ease);
+}
+
+.yl-leave-dialog-btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-500 focus-visible:ring-primary-600 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-200 dark:focus-visible:ring-white;
+}
+
+.dark .fi-body:not(.fi-panel-admin) .yl-leave-dialog-btn-primary {
+    @apply bg-primary-300 text-primary-950 hover:bg-primary-200;
+}
+
+.yl-leave-dialog-btn-danger {
+    @apply bg-white text-danger-600 ring-1 ring-gray-950/15 hover:bg-danger-50 focus-visible:ring-danger-600 dark:bg-white/5 dark:text-danger-400 dark:ring-white/15 dark:hover:bg-danger-400/10;
+}
+
+@media (pointer: coarse) {
+    .yl-leave-dialog-btn {
+        @apply min-h-11;
+    }
+}
+
+@keyframes yl-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px) scale(0.98);
+    }
+}
+
+@keyframes yl-backdrop-in {
+    from {
+        opacity: 0;
+    }
+}
+
 /* Raised surfaces in dark mode (#27272A): dialogs and menus sit above the page panel */
 .dark .fi-modal-window,
 .dark .fi-dropdown-panel {
     @apply bg-gray-800 ring-gray-700;
 }
 
-/* Field borders reach 3:1 against the surface so empty fields are findable (WCAG 1.4.11) */
+/*
+ * Fields: one surface, one border, one focus treatment for every input type
+ * (text, select, textarea, date, money affixes, tags, search).
+ * - Rest: a flat surface with a 1px border at 3:1 (WCAG 1.4.11), no drop shadow.
+ * - Hover: the border darkens a step.
+ * - Focus: the border takes the accent and a soft 3px halo appears outside it,
+ *   instead of a heavy 2px outline.
+ * - Error: the same, in red. Disabled: quiet fill and border.
+ */
+.fi-input-wrp {
+    @apply bg-white shadow-none dark:bg-white/[0.04];
+}
+
 .fi-input-wrp:not(.fi-invalid):not(.fi-disabled):not(:focus-within) {
-    @apply shadow-none ring-gray-950/45 dark:ring-white/35;
+    @apply ring-gray-950/45 dark:ring-white/30;
+}
+
+.fi-input-wrp:not(.fi-invalid):not(.fi-disabled):not(:focus-within):hover {
+    @apply ring-gray-950/60 dark:ring-white/45;
+}
+
+.fi-input-wrp:not(.fi-disabled):not(:has(.fi-input-wrp-actions :focus)):focus-within {
+    @apply ring-1 ring-primary-600 dark:ring-primary-400;
+    --tw-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary-500) 22%, transparent);
+
+    &.fi-invalid {
+        @apply ring-danger-600 dark:ring-danger-400;
+        --tw-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger-500) 20%, transparent);
+    }
+}
+
+.fi-input-wrp.fi-invalid {
+    @apply dark:ring-danger-400;
+}
+
+.fi-input-wrp.fi-disabled {
+    @apply bg-gray-50 ring-gray-950/10 dark:bg-white/[0.02] dark:ring-white/10;
+
+    & .fi-input,
+    & .fi-select-input-btn {
+        @apply text-gray-500 dark:text-gray-400;
+    }
+}
+
+/* Prefix / suffix (currency, %, units): a tinted label cell, not another field */
+.fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline),
+.fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
+    @apply border-gray-950/10 bg-gray-50 dark:border-white/10 dark:bg-white/[0.03];
+}
+
+.fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline) {
+    @apply rounded-s-lg;
+}
+
+.fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
+    @apply rounded-e-lg;
+}
+
+.fi-input-wrp .fi-input-wrp-label {
+    @apply text-xs font-medium text-gray-600 dark:text-gray-400;
+}
+
+/* Placeholders read as hints, never as values */
+.fi-input::placeholder,
+.fi-select-input-placeholder {
+    @apply text-gray-400 dark:text-gray-500;
+}
+
+/* Field labels and helper text */
+.fi-fo-field-label-content {
+    @apply font-medium;
+}
+
+.fi-fo-field-wrp-helper-text,
+.fi-sc-text.fi-color-gray {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+/*
+ * Toggles: off is an outlined track (3:1 like fields), on is the accent.
+ * In dark mode the admin accent is near-white, so the knob turns dark there
+ * and the on state never reads as off.
+ */
+.fi-toggle.fi-toggle-off:not(.fi-color) {
+    @apply bg-gray-100 ring-1 ring-gray-950/45 ring-inset dark:bg-white/[0.06] dark:ring-white/30;
+}
+
+.fi-toggle > :first-child {
+    @apply shadow-sm ring-1 ring-gray-950/10;
+}
+
+.dark .fi-panel-admin .fi-toggle.fi-toggle-on {
+    @apply bg-white;
+
+    & > :first-child {
+        @apply bg-gray-950 ring-0;
+    }
+}
+
+.dark .fi-body:not(.fi-panel-admin) .fi-toggle.fi-toggle-on {
+    @apply bg-primary-400;
+}
+
+/* Checkboxes and radios share the field border */
+input[type='checkbox'].fi-checkbox-input:not(:checked):not(:disabled),
+input[type='radio'].fi-radio-input:not(:checked):not(:disabled) {
+    @apply shadow-none ring-gray-950/45 dark:ring-white/30;
+}
+
+.dark .fi-panel-admin input[type='checkbox'].fi-checkbox-input:checked,
+.dark .fi-panel-admin input[type='radio'].fi-radio-input:checked {
+    @apply bg-gray-200 ring-0;
+    --tw-ring-shadow: 0 0 #0000;
+    color: var(--color-gray-200);
+}
+
+/* Repeaters: items are light rows inside the form, not cards inside cards */
+.fi-fo-repeater-item {
+    @apply shadow-none ring-gray-950/10 dark:bg-white/[0.02] dark:ring-white/10;
+}
+
+.fi-fo-repeater-item-header {
+    @apply px-4 py-2.5;
+}
+
+.fi-fo-repeater-item-content {
+    @apply p-4;
+}
+
+/* File uploads: readable drop-zone hint */
+.fi-fo-file-upload .filepond--drop-label {
+    @apply text-gray-600 dark:text-gray-400;
 }
 
 input[type='checkbox'].fi-checkbox-input:not(:checked):not(:disabled) {

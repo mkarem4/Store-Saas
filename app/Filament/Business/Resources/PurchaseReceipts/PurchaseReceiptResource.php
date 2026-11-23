@@ -108,7 +108,7 @@ class PurchaseReceiptResource extends BusinessResource
         $currency = BusinessPanel::currency();
 
         return $schema->columns(1)->components([
-            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 2, 'lg' => 4])->schema([
                 TextEntry::make('reference')->label(__('Invoice #'))->placeholder('—'),
                 TextEntry::make('supplier.name')->label(__('Supplier'))->placeholder('—'),
                 TextEntry::make('received_at')->label(__('Received at'))->dateTime(),

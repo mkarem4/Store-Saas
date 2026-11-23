@@ -6,7 +6,7 @@ import { defineConfig, lazyPlugins } from 'vite-plus';
 export default defineConfig({
     plugins: lazyPlugins(() => [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/css/filament/yulio/theme.css', 'resources/css/filament/admin/theme.css'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/filament/panel.js', 'resources/css/filament/yulio/theme.css', 'resources/css/filament/admin/theme.css'],
             refresh: true,
             // Self-hosted at build time; same families as the Filament panels.
             fonts: [

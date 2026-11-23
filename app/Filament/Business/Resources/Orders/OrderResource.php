@@ -83,7 +83,7 @@ class OrderResource extends BusinessResource
         $currency = BusinessPanel::currency();
 
         return $schema->columns(1)->components([
-            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 2, 'lg' => 4])->schema([
                 TextEntry::make('number')->label(__('Order #')),
                 TextEntry::make('status')->label(__('Status'))->badge(),
                 TextEntry::make('payment_status')->label(__('Payment'))->badge(),
@@ -92,7 +92,7 @@ class OrderResource extends BusinessResource
                 TextEntry::make('customer.phone')->label(__('Phone'))->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->placeholder('—'),
                 TextEntry::make('placed_at')->label(__('Placed'))->dateTime(),
                 TextEntry::make('expires_at')->label(__('Accept before'))->dateTime()->visible(fn (Order $record): bool => $record->isPending()),
-                TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(['sm' => 2, 'lg' => 3])
+                TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(['default' => 2, 'lg' => 3])
                     ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery)
                     ->state(fn (Order $record): string => collect([$record->delivery_address['line1'] ?? null, $record->delivery_address['line2'] ?? null, $record->delivery_address['city'] ?? null, $record->delivery_address['phone'] ?? null, $record->delivery_address['notes'] ?? null])->filter()->implode(' · '))
                     ->url(fn (Order $record): ?string => isset($record->delivery_address['latitude'])
