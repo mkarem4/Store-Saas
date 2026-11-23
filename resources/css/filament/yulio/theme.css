@@ -249,10 +249,22 @@ input[type='checkbox'].fi-checkbox-input:not(:checked):not(:disabled) {
     font-size: 0.9375rem;
 }
 
-/* Forms keep a comfortable width instead of stretching three fields across a wide screen */
-.fi-resource-create-record-page .fi-page-main,
-.fi-resource-edit-record-page .fi-page-main {
-    max-width: 65rem;
+/* Record forms: header, form and actions share one centered column, so the
+ * title, its actions and the fields line up instead of the form hugging one
+ * edge while the header spans the whole panel. */
+.fi-resource-create-record-page .fi-page-header-main-ctn,
+.fi-resource-edit-record-page .fi-page-header-main-ctn,
+.fi-resource-view-record-page .fi-page-header-main-ctn {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+}
+
+/* The profile is a short single-column form: keep it at reading width. */
+.fi-auth-edit-profile-page .fi-page-header-main-ctn {
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
 }
 
 /* Store and staff panels: in dark mode the ink accent turns light with dark text */

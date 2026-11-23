@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Products;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Filament\Business\Resources\Products\Schemas\TypeFields;
@@ -36,7 +37,7 @@ class ProductResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageCatalog;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
 
@@ -51,20 +52,24 @@ class ProductResource extends BusinessResource
 
     public static function getModelLabel(): string
     {
-        return BusinessPanel::typeKey() === 'restaurant' ? __('Menu item') : __('Product');
+        return BusinessPanel::typeKey() === BusinessTypeKey::Restaurant->value ? __('Menu item') : __('Product');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return BusinessPanel::typeKey() === 'restaurant' ? __('Menu') : __('Products');
+        return BusinessPanel::typeKey() === BusinessTypeKey::Restaurant->value ? __('Menu') : __('Products');
     }
 
     public static function form(Schema $schema): Schema
     {
         $type = BusinessPanel::business()?->businessType;
-        $isRestaurant = $type?->key === 'restaurant';
-        // Type fields that duplicate real product columns (prep time, availability, add-ons) are left out.
-        $typeFields = TypeFields::components($type, except: ['prep_time_minutes', 'is_available', 'modifiers', 'has_modifiers', 'is_published', 'track_stock']);
+        $isRestaurant = $type?->key === BusinessTypeKey::Restaurant->value;
+        // Type fields that duplicate real product or variant columns are left out, so nothing is asked twice.
+        $typeFields = TypeFields::components($type, except: [
+            'prep_time_minutes', 'is_available', 'modifiers', 'has_modifiers', 'is_published', 'track_stock',
+            'sku', 'barcode', 'unit', 'low_stock_threshold', 'expiry_date',
+            'pricing_mode', 'weight_g', 'karat', 'metal', 'making_value', 'certificate_number',
+        ]);
 
         // Polaris-style: what the product is on the main side, status and organisation beside it.
         return $schema->columns(['default' => 1, 'lg' => 3])->components([
@@ -103,7 +108,7 @@ class ProductResource extends BusinessResource
 
     public static function table(Table $table): Table
     {
-        $isRestaurant = BusinessPanel::typeKey() === 'restaurant';
+        $isRestaurant = BusinessPanel::typeKey() === BusinessTypeKey::Restaurant->value;
 
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['variants', 'category']))
@@ -135,7 +140,7 @@ class ProductResource extends BusinessResource
                 Filter::make('low_stock')->label(__('Low stock'))
                     ->query(fn (Builder $query) => $query->where('track_stock', true)->whereHas('variants', fn (Builder $v) => $v->whereNotNull('low_stock_threshold')->whereColumn('stock_qty', '<=', 'low_stock_threshold'))),
                 Filter::make('expiring')->label(__('Expiring within 30 days'))
-                    ->visible(BusinessPanel::typeKey() === 'grocery')
+                    ->visible(BusinessPanel::typeKey() === BusinessTypeKey::Grocery->value)
                     ->query(fn (Builder $query) => $query->whereHas('variants', fn (Builder $v) => $v->whereNotNull('expiry_date')->whereDate('expiry_date', '<=', now()->addDays(30)))),
             ])
             ->recordActions([EditAction::make()]);

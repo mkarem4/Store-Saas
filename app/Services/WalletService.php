@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PayoutStatus;
+use App\Enums\UserRole;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Models\Business;
@@ -323,7 +324,7 @@ class WalletService
     {
         $recipients = User::query()
             ->where('business_id', $payout->business_id)
-            ->where('role', 'business_owner')
+            ->where('role', UserRole::BusinessOwner->value)
             ->get();
 
         foreach ($recipients as $user) {

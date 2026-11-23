@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Products\RelationManagers;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Models\InventoryUnit;
 use App\Models\ProductVariant;
@@ -44,7 +45,7 @@ class SerialNumbersRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return BusinessPanel::typeKey() === 'electronics';
+        return BusinessPanel::typeKey() === BusinessTypeKey::Electronics->value;
     }
 
     /**

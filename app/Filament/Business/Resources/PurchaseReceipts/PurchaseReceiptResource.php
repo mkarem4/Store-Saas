@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\PurchaseReceipts;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Filament\Forms\Components\MoneyInput;
@@ -35,7 +36,7 @@ class PurchaseReceiptResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageInventory;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental', 'restaurant'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxArrowDown;
 
@@ -78,21 +79,27 @@ class PurchaseReceiptResource extends BusinessResource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->columns(3)->components([
-            Select::make('supplier_id')->label(__('Supplier'))
-                ->options(fn (): array => Supplier::query()->pluck('name', 'id')->all())->searchable(),
-            TextInput::make('reference')->label(__('Invoice #')),
-            DateTimePicker::make('received_at')->label(__('Received at'))->default(now())->required(),
-            Repeater::make('lines')->label(__('Items'))->columnSpanFull()->minItems(1)->columns(3)->required()
-                ->schema([
-                    Select::make('variant_id')->label(__('Item'))->required()->searchable()
-                        ->getSearchResultsUsing(fn (string $search): array => self::variantOptions($search))
-                        ->getOptionLabelUsing(fn ($value): ?string => self::variantOptions()[$value] ?? ProductVariant::query()->find($value)?->displayName())
-                        ->options(fn (): array => self::variantOptions()),
-                    TextInput::make('qty')->label(__('Quantity'))->numeric()->minValue(0.001)->required(),
-                    MoneyInput::make('unit_cost_cents')->label(__('Unit cost'))->required()->minValue(0.01),
-                ]),
-            Textarea::make('notes')->label(__('Notes'))->columnSpanFull(),
+        // Main column: the received items. Side column: where and when they came from.
+        return $schema->columns(['default' => 1, 'lg' => 3])->components([
+            Section::make(__('Items'))->columnSpan(['lg' => 2])->schema([
+                Repeater::make('lines')->hiddenLabel()->minItems(1)->columns(['default' => 1, 'sm' => 3])->required()
+                    ->addActionLabel(__('Add item'))
+                    ->schema([
+                        Select::make('variant_id')->label(__('Item'))->required()->searchable()
+                            ->getSearchResultsUsing(fn (string $search): array => self::variantOptions($search))
+                            ->getOptionLabelUsing(fn ($value): ?string => self::variantOptions()[$value] ?? ProductVariant::query()->find($value)?->displayName())
+                            ->options(fn (): array => self::variantOptions()),
+                        TextInput::make('qty')->label(__('Quantity'))->numeric()->minValue(0.001)->required(),
+                        MoneyInput::make('unit_cost_cents')->label(__('Unit cost'))->required()->minValue(0.01),
+                    ]),
+            ]),
+            Section::make(__('Receipt'))->columnSpan(['lg' => 1])->schema([
+                Select::make('supplier_id')->label(__('Supplier'))
+                    ->options(fn (): array => Supplier::query()->pluck('name', 'id')->all())->searchable(),
+                TextInput::make('reference')->label(__('Invoice #')),
+                DateTimePicker::make('received_at')->label(__('Received at'))->default(now())->required()->seconds(false),
+                Textarea::make('notes')->label(__('Notes')),
+            ]),
         ]);
     }
 
@@ -100,11 +107,13 @@ class PurchaseReceiptResource extends BusinessResource
     {
         $currency = BusinessPanel::currency();
 
-        return $schema->columns(4)->components([
-            TextEntry::make('reference')->label(__('Invoice #'))->placeholder('—'),
-            TextEntry::make('supplier.name')->label(__('Supplier'))->placeholder('—'),
-            TextEntry::make('received_at')->label(__('Received at'))->dateTime(),
-            TextEntry::make('total_cost_cents')->label(__('Total cost'))->money($currency, divideBy: 100),
+        return $schema->columns(1)->components([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+                TextEntry::make('reference')->label(__('Invoice #'))->placeholder('—'),
+                TextEntry::make('supplier.name')->label(__('Supplier'))->placeholder('—'),
+                TextEntry::make('received_at')->label(__('Received at'))->dateTime(),
+                TextEntry::make('total_cost_cents')->label(__('Total cost'))->money($currency, divideBy: 100),
+            ]),
             Section::make(__('Items'))->columnSpanFull()->schema([
                 RepeatableEntry::make('items')->hiddenLabel()->columns(4)->schema([
                     TextEntry::make('variant')->label(__('Item'))->state(fn ($record): string => (string) $record->variant?->displayName()),

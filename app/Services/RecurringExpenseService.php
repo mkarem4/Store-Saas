@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ExpenseRecurrence;
 use App\Enums\ExpenseSource;
 use App\Models\Expense;
 use Illuminate\Support\Carbon;
@@ -60,8 +61,8 @@ class RecurringExpenseService
     public function advance(Carbon $date, string $recurrence): Carbon
     {
         return match ($recurrence) {
-            'weekly' => $date->copy()->addWeek(),
-            'yearly' => $date->copy()->addYearNoOverflow(),
+            ExpenseRecurrence::Weekly->value => $date->copy()->addWeek(),
+            ExpenseRecurrence::Yearly->value => $date->copy()->addYearNoOverflow(),
             default => $date->copy()->addMonthNoOverflow(),
         };
     }

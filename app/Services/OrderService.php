@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\PaymentGateway;
+use App\Enums\ExpenseCategoryKey;
 use App\Enums\ExpenseSource;
 use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
@@ -488,8 +489,8 @@ class OrderService
 
             $sale = $this->sales->recordOrderSale($locked);
 
-            $this->expenses->record($locked->business_id, 'platform_commission', ExpenseSource::PlatformFee, $platformFee, __('Platform commission on order :number', ['number' => $locked->number]), $locked);
-            $this->expenses->record($locked->business_id, 'payment_fees', ExpenseSource::GatewayFee, $gatewayFee, __('Payment fee on order :number', ['number' => $locked->number]), $locked);
+            $this->expenses->record($locked->business_id, ExpenseCategoryKey::PlatformCommission->value, ExpenseSource::PlatformFee, $platformFee, __('Platform commission on order :number', ['number' => $locked->number]), $locked);
+            $this->expenses->record($locked->business_id, ExpenseCategoryKey::PaymentFees->value, ExpenseSource::GatewayFee, $gatewayFee, __('Payment fee on order :number', ['number' => $locked->number]), $locked);
 
             $this->wallet->creditCompletedOrder($locked->refresh());
 

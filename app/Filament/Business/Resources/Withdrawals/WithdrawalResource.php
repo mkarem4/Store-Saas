@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Withdrawals;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Models\PayoutRequest;
@@ -21,7 +22,7 @@ class WithdrawalResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageWallet;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static ?string $slug = 'withdrawals';
 

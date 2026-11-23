@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Suppliers;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessResource;
 use App\Models\Supplier;
 use App\Support\Ltr;
@@ -24,7 +25,7 @@ class SupplierResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageSuppliers;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
 

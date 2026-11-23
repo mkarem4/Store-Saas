@@ -70,15 +70,17 @@ class SaleResource extends BusinessResource
     {
         $currency = BusinessPanel::currency();
 
-        return $schema->columns(4)->components([
-            TextEntry::make('number')->label(__('Receipt #')),
-            TextEntry::make('sold_at')->label(__('Date'))->dateTime(),
-            TextEntry::make('channel')->label(__('Channel'))->badge(),
-            TextEntry::make('status')->label(__('Status'))->badge(),
-            TextEntry::make('employee.name')->label(__('Employee'))->placeholder('—'),
-            TextEntry::make('client.name')->label(__('Client'))->placeholder('—'),
-            TextEntry::make('order.number')->label(__('App order'))->placeholder('—'),
-            TextEntry::make('notes')->label(__('Notes'))->placeholder('—'),
+        return $schema->columns(1)->components([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+                TextEntry::make('number')->label(__('Receipt #')),
+                TextEntry::make('sold_at')->label(__('Date'))->dateTime(),
+                TextEntry::make('channel')->label(__('Channel'))->badge(),
+                TextEntry::make('status')->label(__('Status'))->badge(),
+                TextEntry::make('employee.name')->label(__('Employee'))->placeholder('—'),
+                TextEntry::make('client.name')->label(__('Client'))->placeholder('—'),
+                TextEntry::make('order.number')->label(__('App order'))->placeholder('—'),
+                TextEntry::make('notes')->label(__('Notes'))->placeholder('—'),
+            ]),
             Section::make(__('Items'))->columnSpanFull()->schema([
                 RepeatableEntry::make('items')->hiddenLabel()->columns(5)->schema([
                     TextEntry::make('name')->label(__('Item')),

@@ -4,14 +4,14 @@
     $brand = (string) config('app.name');
 
     $typeDetails = [
-        'perfume' => __('Track bottles, variants and stock.'),
-        'grocery' => __('Sell by item, case or weight.'),
-        'car_showroom' => __('Track VINs, vehicle costs and buyer inquiries.'),
-        'car_rental' => __('Track availability, rental contracts and deposits.'),
-        'clothing' => __('Manage stock by size and colour.'),
-        'electronics' => __('Track serial numbers and device inventory.'),
-        'jewelry' => __('Track weight, gold prices and making charges.'),
-        'restaurant' => __('Manage menu items, extras and order preparation.'),
+        \App\Enums\BusinessTypeKey::Perfume->value => __('Track bottles, variants and stock.'),
+        \App\Enums\BusinessTypeKey::Grocery->value => __('Sell by item, case or weight.'),
+        \App\Enums\BusinessTypeKey::CarShowroom->value => __('Track VINs, vehicle costs and buyer inquiries.'),
+        \App\Enums\BusinessTypeKey::CarRental->value => __('Track availability, rental contracts and deposits.'),
+        \App\Enums\BusinessTypeKey::Clothing->value => __('Manage stock by size and colour.'),
+        \App\Enums\BusinessTypeKey::Electronics->value => __('Track serial numbers and device inventory.'),
+        \App\Enums\BusinessTypeKey::Jewelry->value => __('Track weight, gold prices and making charges.'),
+        \App\Enums\BusinessTypeKey::Restaurant->value => __('Manage menu items, extras and order preparation.'),
     ];
 
     $textFields = [

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Pages;
 
+use App\Enums\BusinessTypeKey;
 use App\Exports\ReportExport;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\ReportPeriod;
@@ -115,8 +116,8 @@ class Reports extends Dashboard
             'byEmployee' => $service->salesByEmployee($business, $from, $until),
             'hours' => $service->hoursByEmployee($business, $from, $until),
             'tax' => $service->taxReport($business, $from, $until),
-            'vehicles' => BusinessPanel::isType(['car_showroom']) ? $service->vehicleProfits($business, $from, $until) : collect(),
-            'lowStock' => BusinessPanel::isType(['car_showroom', 'car_rental', 'restaurant']) ? collect() : $service->lowStock($business),
+            'vehicles' => BusinessPanel::isType([BusinessTypeKey::CarShowroom->value]) ? $service->vehicleProfits($business, $from, $until) : collect(),
+            'lowStock' => BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value]) ? collect() : $service->lowStock($business),
         ];
     }
 

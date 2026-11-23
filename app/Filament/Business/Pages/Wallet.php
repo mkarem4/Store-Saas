@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Pages;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Filament\Business\BusinessPanel;
@@ -60,7 +61,7 @@ class Wallet extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return BusinessPanel::can(Permission::ManageWallet) && ! BusinessPanel::isType(['car_showroom', 'car_rental']);
+        return BusinessPanel::can(Permission::ManageWallet) && ! BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value]);
     }
 
     protected function getHeaderWidgets(): array

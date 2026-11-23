@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Expenses;
 
+use App\Enums\ExpenseRecurrence;
 use App\Enums\ExpenseSource;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
@@ -83,7 +84,7 @@ class ExpenseResource extends BusinessResource
             DatePicker::make('expense_date')->label(__('Date'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->toDateString())->required(),
             Toggle::make('is_recurring')->label(__('Repeats automatically'))->live()
                 ->helperText(__('Creates this expense every period from the next due date.')),
-            Select::make('recurrence')->label(__('Every'))->options(['weekly' => __('Week'), 'monthly' => __('Month'), 'yearly' => __('Year')])->default('monthly')
+            Select::make('recurrence')->label(__('Every'))->options(ExpenseRecurrence::class)->default(ExpenseRecurrence::Monthly->value)
                 ->visible(fn (Get $get): bool => (bool) $get('is_recurring'))->required(fn (Get $get): bool => (bool) $get('is_recurring')),
             DatePicker::make('next_due_date')->label(__('Next due date'))
                 ->visible(fn (Get $get): bool => (bool) $get('is_recurring'))->required(fn (Get $get): bool => (bool) $get('is_recurring')),

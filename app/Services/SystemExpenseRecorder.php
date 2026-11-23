@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ExpenseCategoryKey;
 use App\Enums\ExpenseSource;
 use App\Models\Business;
 use App\Models\Expense;
@@ -16,8 +17,8 @@ use Illuminate\Support\Carbon;
 class SystemExpenseRecorder
 {
     public const CATEGORIES = [
-        'payment_fees' => ['en' => 'Payment fees', 'ar' => 'رسوم الدفع'],
-        'platform_commission' => ['en' => 'Platform commission', 'ar' => 'عمولة المنصة'],
+        ExpenseCategoryKey::PaymentFees->value => ['en' => 'Payment fees', 'ar' => 'رسوم الدفع'],
+        ExpenseCategoryKey::PlatformCommission->value => ['en' => 'Platform commission', 'ar' => 'عمولة المنصة'],
     ];
 
     public function record(

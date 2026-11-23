@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Orders;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\FulfillmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -42,7 +43,7 @@ class OrderResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageOrders;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDevicePhoneMobile;
 
@@ -81,23 +82,25 @@ class OrderResource extends BusinessResource
     {
         $currency = BusinessPanel::currency();
 
-        return $schema->columns(4)->components([
-            TextEntry::make('number')->label(__('Order #')),
-            TextEntry::make('status')->label(__('Status'))->badge(),
-            TextEntry::make('payment_status')->label(__('Payment'))->badge(),
-            TextEntry::make('fulfillment')->label(__('Fulfillment'))->badge()->color('gray'),
-            TextEntry::make('customer.name')->label(__('Customer')),
-            TextEntry::make('customer.phone')->label(__('Phone'))->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->placeholder('—'),
-            TextEntry::make('placed_at')->label(__('Placed'))->dateTime(),
-            TextEntry::make('expires_at')->label(__('Accept before'))->dateTime()->visible(fn (Order $record): bool => $record->isPending()),
-            TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(3)
-                ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery)
-                ->state(fn (Order $record): string => collect([$record->delivery_address['line1'] ?? null, $record->delivery_address['line2'] ?? null, $record->delivery_address['city'] ?? null, $record->delivery_address['phone'] ?? null, $record->delivery_address['notes'] ?? null])->filter()->implode(' · '))
-                ->url(fn (Order $record): ?string => isset($record->delivery_address['latitude'])
-                    ? 'https://www.google.com/maps/search/?api=1&query='.$record->delivery_address['latitude'].','.$record->delivery_address['longitude'] : null, shouldOpenInNewTab: true),
-            TextEntry::make('delivery_distance_km')->label(__('Distance'))->suffix(' km')->placeholder('—')
-                ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery),
-            TextEntry::make('notes')->label(__('Customer notes'))->placeholder('—')->columnSpanFull(),
+        return $schema->columns(1)->components([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 4])->schema([
+                TextEntry::make('number')->label(__('Order #')),
+                TextEntry::make('status')->label(__('Status'))->badge(),
+                TextEntry::make('payment_status')->label(__('Payment'))->badge(),
+                TextEntry::make('fulfillment')->label(__('Fulfillment'))->badge()->color('gray'),
+                TextEntry::make('customer.name')->label(__('Customer')),
+                TextEntry::make('customer.phone')->label(__('Phone'))->formatStateUsing(fn (?string $state): ?HtmlString => Ltr::wrap($state))->placeholder('—'),
+                TextEntry::make('placed_at')->label(__('Placed'))->dateTime(),
+                TextEntry::make('expires_at')->label(__('Accept before'))->dateTime()->visible(fn (Order $record): bool => $record->isPending()),
+                TextEntry::make('delivery_address')->label(__('Delivery address'))->columnSpan(['sm' => 2, 'lg' => 3])
+                    ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery)
+                    ->state(fn (Order $record): string => collect([$record->delivery_address['line1'] ?? null, $record->delivery_address['line2'] ?? null, $record->delivery_address['city'] ?? null, $record->delivery_address['phone'] ?? null, $record->delivery_address['notes'] ?? null])->filter()->implode(' · '))
+                    ->url(fn (Order $record): ?string => isset($record->delivery_address['latitude'])
+                        ? 'https://www.google.com/maps/search/?api=1&query='.$record->delivery_address['latitude'].','.$record->delivery_address['longitude'] : null, shouldOpenInNewTab: true),
+                TextEntry::make('delivery_distance_km')->label(__('Distance'))->suffix(' km')->placeholder('—')
+                    ->visible(fn (Order $record): bool => $record->fulfillment === FulfillmentType::Delivery),
+                TextEntry::make('notes')->label(__('Customer notes'))->placeholder('—')->columnSpanFull(),
+            ]),
             Section::make(__('Items'))->columnSpanFull()->schema([
                 RepeatableEntry::make('items')->hiddenLabel()->columns(4)->schema([
                     TextEntry::make('name')->label(__('Item'))

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\StockMovements;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\StockMovementType;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
@@ -26,7 +27,7 @@ class StockMovementResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageInventory;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental', 'restaurant'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsUpDown;
 

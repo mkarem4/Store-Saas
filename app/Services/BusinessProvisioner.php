@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BusinessStatus;
+use App\Enums\ExpenseCategoryKey;
 use App\Enums\UserRole;
 use App\Models\Business;
 use App\Models\BusinessType;
@@ -62,7 +63,7 @@ class BusinessProvisioner
 
             $this->createRoles($business, $owner);
 
-            foreach (['rent' => ['en' => 'Rent', 'ar' => 'إيجار'], 'salaries' => ['en' => 'Salaries', 'ar' => 'رواتب'], 'electricity' => ['en' => 'Electricity', 'ar' => 'كهرباء'], 'water' => ['en' => 'Water', 'ar' => 'مياه'], 'maintenance' => ['en' => 'Maintenance', 'ar' => 'صيانة'], 'marketing' => ['en' => 'Marketing', 'ar' => 'تسويق'], 'other' => ['en' => 'Other', 'ar' => 'أخرى']] + SystemExpenseRecorder::CATEGORIES as $key => $label) {
+            foreach ([ExpenseCategoryKey::Rent->value => ['en' => 'Rent', 'ar' => 'إيجار'], ExpenseCategoryKey::Salaries->value => ['en' => 'Salaries', 'ar' => 'رواتب'], ExpenseCategoryKey::Electricity->value => ['en' => 'Electricity', 'ar' => 'كهرباء'], ExpenseCategoryKey::Water->value => ['en' => 'Water', 'ar' => 'مياه'], ExpenseCategoryKey::Maintenance->value => ['en' => 'Maintenance', 'ar' => 'صيانة'], ExpenseCategoryKey::Marketing->value => ['en' => 'Marketing', 'ar' => 'تسويق'], ExpenseCategoryKey::Other->value => ['en' => 'Other', 'ar' => 'أخرى']] + SystemExpenseRecorder::CATEGORIES as $key => $label) {
                 ExpenseCategory::query()->firstOrCreate(
                     ['business_id' => $business->id, 'key' => $key],
                     ['name' => $label, 'is_system' => true],
@@ -77,7 +78,7 @@ class BusinessProvisioner
     {
         $this->syncRoles($business);
 
-        $this->withTeam($business, fn () => $owner->syncRoles(['business_owner']));
+        $this->withTeam($business, fn () => $owner->syncRoles([UserRole::BusinessOwner->value]));
     }
 
     /**
@@ -92,9 +93,9 @@ class BusinessProvisioner
         }
 
         $this->withTeam($business, function (): void {
-            Role::findOrCreate('business_owner', 'web')->syncPermissions(Permission::businessOwner());
+            Role::findOrCreate(UserRole::BusinessOwner->value, 'web')->syncPermissions(Permission::businessOwner());
 
-            $staffRole = Role::findOrCreate('staff', 'web');
+            $staffRole = Role::findOrCreate(UserRole::Staff->value, 'web');
 
             if ($staffRole->wasRecentlyCreated) {
                 $staffRole->syncPermissions(Permission::staff());

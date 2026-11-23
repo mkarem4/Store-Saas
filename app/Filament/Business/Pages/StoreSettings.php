@@ -3,6 +3,7 @@
 namespace App\Filament\Business\Pages;
 
 use App\Enums\AttendanceMode;
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
 use App\Filament\Support\Fields;
@@ -148,7 +149,7 @@ class StoreSettings extends SettingsPage
     public function form(Schema $schema): Schema
     {
         $type = BusinessPanel::typeKey();
-        $sellsInApp = ! in_array($type, ['car_showroom', 'car_rental'], true);
+        $sellsInApp = ! in_array($type, [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value], true);
         $days = ['mon' => __('Monday'), 'tue' => __('Tuesday'), 'wed' => __('Wednesday'), 'thu' => __('Thursday'), 'fri' => __('Friday'), 'sat' => __('Saturday'), 'sun' => __('Sunday')];
         $ipMode = fn (Get $get): bool => in_array(($get('attendance_mode') instanceof AttendanceMode ? $get('attendance_mode') : AttendanceMode::tryFrom((string) $get('attendance_mode'))), [AttendanceMode::Ip, AttendanceMode::Both, AttendanceMode::Either], true);
         $gpsMode = fn (Get $get): bool => in_array(($get('attendance_mode') instanceof AttendanceMode ? $get('attendance_mode') : AttendanceMode::tryFrom((string) $get('attendance_mode'))), [AttendanceMode::Gps, AttendanceMode::Both, AttendanceMode::Either], true);
@@ -209,10 +210,10 @@ class StoreSettings extends SettingsPage
                         })),
                     TextInput::make('geofence_radius_m')->label(__('Allowed radius'))->integer()->minValue(10)->maxValue(5000)->suffix('m')->visible($gpsMode),
                 ]),
-            Section::make(__('Inventory'))->aside()->description(__('What happens when an item runs out.'))->visible(! in_array($type, ['car_showroom', 'car_rental', 'restaurant'], true))->schema([
+            Section::make(__('Inventory'))->aside()->description(__('What happens when an item runs out.'))->visible(! in_array($type, [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value], true))->schema([
                 Toggle::make('allow_negative_stock')->label(__('Allow selling below zero stock')),
             ]),
-            Section::make(__('Gold price'))->aside()->description(__('Where today\'s gold price comes from.'))->visible($type === 'jewelry')->schema([
+            Section::make(__('Gold price'))->aside()->description(__('Where today\'s gold price comes from.'))->visible($type === BusinessTypeKey::Jewelry->value)->schema([
                 Toggle::make('gold_auto_price')->label(__('Update gold prices automatically')),
             ]),
         ]);

@@ -60,7 +60,7 @@ class EmployeeService
 
             try {
                 if ($user->roles()->doesntExist()) {
-                    $user->assignRole(Role::findOrCreate('staff', 'web'));
+                    $user->assignRole(Role::findOrCreate(UserRole::Staff->value, 'web'));
                 }
             } finally {
                 $registrar->setPermissionsTeamId($previous);

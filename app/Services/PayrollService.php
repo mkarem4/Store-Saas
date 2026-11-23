@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\BusinessTypeKey;
+use App\Enums\ExpenseCategoryKey;
 use App\Enums\ExpenseSource;
 use App\Enums\PayType;
 use App\Enums\SaleStatus;
@@ -177,7 +179,7 @@ class PayrollService
             ]);
 
             $category = ExpenseCategory::query()->firstOrCreate(
-                ['business_id' => $run->business_id, 'key' => 'salaries'],
+                ['business_id' => $run->business_id, 'key' => ExpenseCategoryKey::Salaries->value],
                 ['name' => ['en' => 'Salaries', 'ar' => 'رواتب'], 'is_system' => true],
             );
 
@@ -230,7 +232,7 @@ class PayrollService
     /**
      * Business types whose staff earn sales commission (D16).
      */
-    public const COMMISSION_TYPES = ['car_showroom', 'jewelry'];
+    public const COMMISSION_TYPES = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::Jewelry->value];
 
     /**
      * Commission = employee rate × the value of their sales in the period,

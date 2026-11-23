@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Pages;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\GoldPriceSource;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
@@ -53,7 +54,7 @@ class GoldPrices extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return BusinessPanel::isType(['jewelry']) && BusinessPanel::can(Permission::ManageGoldPrices);
+        return BusinessPanel::isType([BusinessTypeKey::Jewelry->value]) && BusinessPanel::can(Permission::ManageGoldPrices);
     }
 
     public function content(Schema $schema): Schema

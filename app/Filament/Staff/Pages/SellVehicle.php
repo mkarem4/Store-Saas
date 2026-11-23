@@ -2,7 +2,9 @@
 
 namespace App\Filament\Staff\Pages;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\PaymentMethod;
+use App\Enums\VehiclePurpose;
 use App\Enums\VehicleStatus;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
@@ -49,7 +51,7 @@ class SellVehicle extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return BusinessPanel::isType(['car_showroom']) && BusinessPanel::can(Permission::SellVehicles) && StaffPanel::employee() !== null;
+        return BusinessPanel::isType([BusinessTypeKey::CarShowroom->value]) && BusinessPanel::can(Permission::SellVehicles) && StaffPanel::employee() !== null;
     }
 
     public function content(Schema $schema): Schema
@@ -60,7 +62,7 @@ class SellVehicle extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(Vehicle::query()->where('purpose', 'sale')->whereIn('status', [VehicleStatus::Available, VehicleStatus::Reserved]))
+            ->query(Vehicle::query()->where('purpose', VehiclePurpose::Sale->value)->whereIn('status', [VehicleStatus::Available, VehicleStatus::Reserved]))
             ->modelLabel(__('vehicle'))->pluralModelLabel(__('vehicles'))
             ->columns([
                 TextColumn::make('name')->label(__('Vehicle'))->state(fn (Vehicle $record): string => $record->displayName())->description(fn (Vehicle $record): string => $record->vin)

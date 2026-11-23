@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\PayoutMethods;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\PayoutMethodType;
 use App\Filament\Business\BusinessResource;
 use App\Models\PayoutMethod;
@@ -31,7 +32,7 @@ class PayoutMethodResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageWallet;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
 

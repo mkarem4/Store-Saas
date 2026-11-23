@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pos;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\PaymentMethod;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
@@ -71,7 +72,7 @@ abstract class PointOfSalePage extends Page
 
     public static function canAccess(): bool
     {
-        return BusinessPanel::can(Permission::UsePos) && ! BusinessPanel::isType(['car_showroom', 'car_rental']);
+        return BusinessPanel::can(Permission::UsePos) && ! BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value]);
     }
 
     public function mount(): void

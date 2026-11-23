@@ -74,3 +74,21 @@ it('renders every staff page for an employee', function (): void {
         expect($response->status())->toBe($expected, "{$name} returned {$response->status()}: ".substr(strip_tags((string) $response->getContent()), 0, 400));
     }
 })->group('panels');
+
+it('renders the tenant sidebar on the store and staff profile pages', function (string $panel): void {
+    $this->seed(BusinessTypeSeeder::class);
+    $type = BusinessType::query()->where('key', 'car_showroom')->firstOrFail();
+    $business = app(BusinessProvisioner::class)->provision($type, ['name' => ['en' => 'Cars', 'ar' => 'سيارات']], 'Owner', 'cars@shop.test', 'password');
+    $user = User::query()->where('email', 'cars@shop.test')->firstOrFail();
+
+    if ($panel === 'staff') {
+        $user = app(EmployeeService::class)->createWithLogin($business, ['name' => 'Sam', 'pay_type' => 'hourly', 'hourly_rate_cents' => 1500], 'sam@shop.test', 'password')->user;
+    }
+
+    $user->update(['must_change_password' => false]);
+
+    // The profile route has no {tenant}; its sidebar links still need the user's store.
+    $this->actingAs($user)->get(route("filament.{$panel}.auth.profile"))
+        ->assertOk()
+        ->assertSee(url("{$panel}/{$business->slug}/"), false);
+})->with(['business', 'staff'])->group('panels');

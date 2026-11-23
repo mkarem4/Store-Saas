@@ -2,9 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\EditProfile;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetPermissionTeam;
+use App\Http\Middleware\UseOwnTenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -65,7 +67,7 @@ trait ConfiguresPanel
             ->id($id)
             ->path($id)
             ->login()
-            ->profile(isSimple: false)
+            ->profile(EditProfile::class, isSimple: false)
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->viteTheme('resources/css/filament/yulio/theme.css')
@@ -112,7 +114,10 @@ trait ConfiguresPanel
             ])
             ->authMiddleware([
                 Authenticate::class,
+                UseOwnTenant::class,
                 EnsurePasswordChanged::class,
-            ]);
+            ])
+            // Livewire requests from tenant-less pages (profile) need the tenant too.
+            ->persistentMiddleware([UseOwnTenant::class]);
     }
 }

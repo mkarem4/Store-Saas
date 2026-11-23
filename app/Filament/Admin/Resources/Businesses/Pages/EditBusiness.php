@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Businesses\Pages;
 
 use App\Filament\Admin\Resources\Businesses\BusinessResource;
+use App\Filament\Support\MoreActions;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
@@ -14,6 +15,6 @@ class EditBusiness extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [DeleteAction::make(), RestoreAction::make(), ForceDeleteAction::make()];
+        return [MoreActions::make([RestoreAction::make(), DeleteAction::make(), ForceDeleteAction::make()])];
     }
 }

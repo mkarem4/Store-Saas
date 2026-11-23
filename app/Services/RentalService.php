@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductUnit;
+use App\Enums\RentalRateType;
 use App\Enums\RentalStatus;
 use App\Enums\SaleChannel;
 use App\Enums\SaleStatus;
@@ -25,7 +27,7 @@ use InvalidArgumentException;
  */
 class RentalService
 {
-    public const PERIOD_DAYS = ['daily' => 1, 'weekly' => 7, 'monthly' => 30];
+    public const PERIOD_DAYS = [RentalRateType::Daily->value => 1, RentalRateType::Weekly->value => 7, RentalRateType::Monthly->value => 30];
 
     public function totalFor(string $rateType, int $rateCents, Carbon $startsAt, Carbon $endsAt): int
     {
@@ -227,7 +229,7 @@ class RentalService
             'sale_id' => $sale->id,
             'name' => $label,
             'qty' => 1,
-            'unit' => 'piece',
+            'unit' => ProductUnit::Piece->value,
             'unit_price_cents' => $amountCents,
             'unit_cost_cents' => 0,
             'total_cents' => $amountCents,

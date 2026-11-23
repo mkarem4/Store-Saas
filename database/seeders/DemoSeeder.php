@@ -2,8 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AttendanceMode;
 use App\Enums\BusinessStatus;
+use App\Enums\BusinessTypeKey;
+use App\Enums\ExpenseCategoryKey;
+use App\Enums\ExpenseRecurrence;
+use App\Enums\ExpenseSource;
 use App\Enums\FulfillmentType;
+use App\Enums\JewelryMetal;
 use App\Enums\JewelryPricingMode;
 use App\Enums\MakingType;
 use App\Enums\OrderStatus;
@@ -11,9 +17,12 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PayType;
 use App\Enums\ProductUnit;
+use App\Enums\RentalRateType;
+use App\Enums\RentalStatus;
 use App\Enums\SaleChannel;
 use App\Enums\SaleStatus;
 use App\Enums\UserRole;
+use App\Enums\VehiclePurpose;
 use App\Enums\VehicleStatus;
 use App\Models\Business;
 use App\Models\BusinessType;
@@ -69,15 +78,15 @@ class DemoSeeder extends Seeder
             $this->createCatalog($business, $type);
             $this->createExpenses($business);
 
-            if ($type->key === 'car_showroom') {
+            if ($type->key === BusinessTypeKey::CarShowroom->value) {
                 $this->createCarShowroom($business);
             }
 
-            if ($type->key === 'car_rental') {
+            if ($type->key === BusinessTypeKey::CarRental->value) {
                 $this->createCarRental($business);
             }
 
-            if ($type->key === 'jewelry') {
+            if ($type->key === BusinessTypeKey::Jewelry->value) {
                 $this->createGoldPrices($business);
             }
 
@@ -90,14 +99,14 @@ class DemoSeeder extends Seeder
     private function createBusiness(BusinessType $type): Business
     {
         $names = [
-            'car_showroom' => ['en' => 'Prime Motors', 'ar' => 'برايم موتورز'],
-            'electronics' => ['en' => 'Tech Hub', 'ar' => 'تك هب'],
-            'car_rental' => ['en' => 'City Rentals', 'ar' => 'سيتي لتأجير السيارات'],
-            'jewelry' => ['en' => 'Golden House', 'ar' => 'بيت الذهب'],
-            'perfume' => ['en' => 'Scent Studio', 'ar' => 'استوديو العطور'],
-            'clothing' => ['en' => 'Urban Threads', 'ar' => 'أوربان ثريدز'],
-            'grocery' => ['en' => 'Fresh Market', 'ar' => 'فريش ماركت'],
-            'restaurant' => ['en' => 'Olive & Flame', 'ar' => 'أوليف آند فليم'],
+            BusinessTypeKey::CarShowroom->value => ['en' => 'Prime Motors', 'ar' => 'برايم موتورز'],
+            BusinessTypeKey::Electronics->value => ['en' => 'Tech Hub', 'ar' => 'تك هب'],
+            BusinessTypeKey::CarRental->value => ['en' => 'City Rentals', 'ar' => 'سيتي لتأجير السيارات'],
+            BusinessTypeKey::Jewelry->value => ['en' => 'Golden House', 'ar' => 'بيت الذهب'],
+            BusinessTypeKey::Perfume->value => ['en' => 'Scent Studio', 'ar' => 'استوديو العطور'],
+            BusinessTypeKey::Clothing->value => ['en' => 'Urban Threads', 'ar' => 'أوربان ثريدز'],
+            BusinessTypeKey::Grocery->value => ['en' => 'Fresh Market', 'ar' => 'فريش ماركت'],
+            BusinessTypeKey::Restaurant->value => ['en' => 'Olive & Flame', 'ar' => 'أوليف آند فليم'],
         ];
 
         $name = $names[$type->key] ?? ['en' => Str::title($type->key), 'ar' => $type->translatedName()];
@@ -125,7 +134,7 @@ class DemoSeeder extends Seeder
                 'timezone' => 'America/Chicago',
                 'status' => BusinessStatus::Active,
                 'allowed_ips' => ['127.0.0.1', '::1'],
-                'attendance_mode' => 'ip',
+                'attendance_mode' => AttendanceMode::Ip,
                 'geofence_radius_m' => 150,
                 'settings' => [
                     ...Business::DEFAULT_SETTINGS,
@@ -144,10 +153,10 @@ class DemoSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->setPermissionsTeamId($business->id);
 
-        $ownerRole = Role::findOrCreate('business_owner', 'web');
+        $ownerRole = Role::findOrCreate(UserRole::BusinessOwner->value, 'web');
         $ownerRole->syncPermissions(Permission::businessOwner());
 
-        $staffRole = Role::findOrCreate('staff', 'web');
+        $staffRole = Role::findOrCreate(UserRole::Staff->value, 'web');
         $staffRole->syncPermissions(Permission::staff());
 
         $owner = User::query()->updateOrCreate(
@@ -185,7 +194,7 @@ class DemoSeeder extends Seeder
                 'pay_type' => PayType::Hourly,
                 'hourly_rate_cents' => 1800,
                 'monthly_salary_cents' => 0,
-                'commission_rate_bps' => in_array($type->key, ['car_showroom', 'jewelry'], true) ? 500 : 0,
+                'commission_rate_bps' => in_array($type->key, [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::Jewelry->value], true) ? 500 : 0,
                 'hire_date' => now()->subMonths(6)->toDateString(),
                 'is_active' => true,
             ],
@@ -211,14 +220,14 @@ class DemoSeeder extends Seeder
     private function createCatalog(Business $business, BusinessType $type): void
     {
         $categories = match ($type->key) {
-            'clothing' => [['en' => 'Men', 'ar' => 'رجالي'], ['en' => 'Women', 'ar' => 'نسائي'], ['en' => 'Accessories', 'ar' => 'إكسسوارات']],
-            'electronics' => [['en' => 'Phones', 'ar' => 'هواتف'], ['en' => 'Audio', 'ar' => 'صوتيات'], ['en' => 'Accessories', 'ar' => 'إكسسوارات']],
-            'grocery' => [['en' => 'Pantry', 'ar' => 'بقالة'], ['en' => 'Dairy', 'ar' => 'ألبان'], ['en' => 'Produce', 'ar' => 'خضروات وفواكه']],
-            'perfume' => [['en' => 'Men', 'ar' => 'رجالي'], ['en' => 'Women', 'ar' => 'نسائي'], ['en' => 'Unisex', 'ar' => 'للجنسين']],
-            'jewelry' => [['en' => 'Rings', 'ar' => 'خواتم'], ['en' => 'Necklaces', 'ar' => 'قلادات'], ['en' => 'Bracelets', 'ar' => 'أساور']],
-            'restaurant' => [['en' => 'Starters', 'ar' => 'مقبلات'], ['en' => 'Mains', 'ar' => 'أطباق رئيسية'], ['en' => 'Drinks', 'ar' => 'مشروبات']],
-            'car_showroom' => [['en' => 'Sedans', 'ar' => 'سيدان'], ['en' => 'SUVs', 'ar' => 'دفع رباعي']],
-            'car_rental' => [['en' => 'Economy', 'ar' => 'اقتصادية'], ['en' => 'Premium', 'ar' => 'فاخرة']],
+            BusinessTypeKey::Clothing->value => [['en' => 'Men', 'ar' => 'رجالي'], ['en' => 'Women', 'ar' => 'نسائي'], ['en' => 'Accessories', 'ar' => 'إكسسوارات']],
+            BusinessTypeKey::Electronics->value => [['en' => 'Phones', 'ar' => 'هواتف'], ['en' => 'Audio', 'ar' => 'صوتيات'], ['en' => 'Accessories', 'ar' => 'إكسسوارات']],
+            BusinessTypeKey::Grocery->value => [['en' => 'Pantry', 'ar' => 'بقالة'], ['en' => 'Dairy', 'ar' => 'ألبان'], ['en' => 'Produce', 'ar' => 'خضروات وفواكه']],
+            BusinessTypeKey::Perfume->value => [['en' => 'Men', 'ar' => 'رجالي'], ['en' => 'Women', 'ar' => 'نسائي'], ['en' => 'Unisex', 'ar' => 'للجنسين']],
+            BusinessTypeKey::Jewelry->value => [['en' => 'Rings', 'ar' => 'خواتم'], ['en' => 'Necklaces', 'ar' => 'قلادات'], ['en' => 'Bracelets', 'ar' => 'أساور']],
+            BusinessTypeKey::Restaurant->value => [['en' => 'Starters', 'ar' => 'مقبلات'], ['en' => 'Mains', 'ar' => 'أطباق رئيسية'], ['en' => 'Drinks', 'ar' => 'مشروبات']],
+            BusinessTypeKey::CarShowroom->value => [['en' => 'Sedans', 'ar' => 'سيدان'], ['en' => 'SUVs', 'ar' => 'دفع رباعي']],
+            BusinessTypeKey::CarRental->value => [['en' => 'Economy', 'ar' => 'اقتصادية'], ['en' => 'Premium', 'ar' => 'فاخرة']],
             default => [['en' => 'General', 'ar' => 'عام']],
         };
 
@@ -228,38 +237,38 @@ class DemoSeeder extends Seeder
         ));
 
         $catalog = match ($type->key) {
-            'clothing' => [
-                ['Classic T-Shirt', 'تي شيرت كلاسيك', 1200, 2500, [['S', 'M', 'L'], 'piece']],
-                ['Slim Jeans', 'جينز سليم', 2200, 4500, [['30', '32', '34'], 'piece']],
-                ['Bomber Jacket', 'جاكيت بومبر', 3500, 7900, [['M', 'L'], 'piece']],
+            BusinessTypeKey::Clothing->value => [
+                ['Classic T-Shirt', 'تي شيرت كلاسيك', 1200, 2500, [['S', 'M', 'L'], ProductUnit::Piece->value]],
+                ['Slim Jeans', 'جينز سليم', 2200, 4500, [['30', '32', '34'], ProductUnit::Piece->value]],
+                ['Bomber Jacket', 'جاكيت بومبر', 3500, 7900, [['M', 'L'], ProductUnit::Piece->value]],
             ],
-            'electronics' => [
-                ['Smartphone X', 'هاتف ذكي X', 45000, 69900, [['128GB', '256GB'], 'piece']],
-                ['Wireless Earbuds', 'سماعات لاسلكية', 3500, 7900, [['White', 'Black'], 'piece']],
-                ['Fast Charger', 'شاحن سريع', 900, 1999, [['20W'], 'piece']],
+            BusinessTypeKey::Electronics->value => [
+                ['Smartphone X', 'هاتف ذكي X', 45000, 69900, [['128GB', '256GB'], ProductUnit::Piece->value]],
+                ['Wireless Earbuds', 'سماعات لاسلكية', 3500, 7900, [['White', 'Black'], ProductUnit::Piece->value]],
+                ['Fast Charger', 'شاحن سريع', 900, 1999, [['20W'], ProductUnit::Piece->value]],
             ],
-            'grocery' => [
-                ['Basmati Rice', 'أرز بسمتي', 180, 299, [['1kg'], 'kg']],
-                ['Fresh Milk', 'حليب طازج', 120, 249, [['1L'], 'piece']],
-                ['Free Range Eggs', 'بيض بلدي', 300, 549, [['12pcs'], 'carton']],
+            BusinessTypeKey::Grocery->value => [
+                ['Basmati Rice', 'أرز بسمتي', 180, 299, [['1kg'], ProductUnit::Kilogram->value]],
+                ['Fresh Milk', 'حليب طازج', 120, 249, [['1L'], ProductUnit::Piece->value]],
+                ['Free Range Eggs', 'بيض بلدي', 300, 549, [['12pcs'], ProductUnit::Carton->value]],
             ],
-            'perfume' => [
-                ['Oud Royale', 'عود رويال', 3000, 6500, [['50ml', '100ml'], 'piece']],
-                ['Citrus Bloom', 'حمضيات بلوم', 1800, 3900, [['30ml', '50ml'], 'piece']],
+            BusinessTypeKey::Perfume->value => [
+                ['Oud Royale', 'عود رويال', 3000, 6500, [['50ml', '100ml'], ProductUnit::Piece->value]],
+                ['Citrus Bloom', 'حمضيات بلوم', 1800, 3900, [['30ml', '50ml'], ProductUnit::Piece->value]],
             ],
-            'jewelry' => [
-                ['Gold Ring', 'خاتم ذهب', 0, 0, [['18K'], 'piece']],
-                ['Gold Necklace', 'قلادة ذهب', 0, 0, [['21K'], 'piece']],
-                ['Silver Bracelet', 'أسورة فضة', 4500, 8900, [['925'], 'piece']],
+            BusinessTypeKey::Jewelry->value => [
+                ['Gold Ring', 'خاتم ذهب', 0, 0, [['18K'], ProductUnit::Piece->value]],
+                ['Gold Necklace', 'قلادة ذهب', 0, 0, [['21K'], ProductUnit::Piece->value]],
+                ['Silver Bracelet', 'أسورة فضة', 4500, 8900, [['925'], ProductUnit::Piece->value]],
             ],
-            'restaurant' => [
-                ['Hummus', 'حمص', 300, 650, [['Regular'], 'piece']],
-                ['Grilled Chicken', 'دجاج مشوي', 700, 1450, [['Regular', 'Large'], 'piece']],
-                ['Lemonade', 'ليموناضة', 100, 350, [['Regular'], 'piece']],
-                ['Chocolate Cake', 'كيك شوكولاتة', 500, 899, [['Slice'], 'piece']],
+            BusinessTypeKey::Restaurant->value => [
+                ['Hummus', 'حمص', 300, 650, [['Regular'], ProductUnit::Piece->value]],
+                ['Grilled Chicken', 'دجاج مشوي', 700, 1450, [['Regular', 'Large'], ProductUnit::Piece->value]],
+                ['Lemonade', 'ليموناضة', 100, 350, [['Regular'], ProductUnit::Piece->value]],
+                ['Chocolate Cake', 'كيك شوكولاتة', 500, 899, [['Slice'], ProductUnit::Piece->value]],
             ],
-            'car_showroom' => [],
-            'car_rental' => [],
+            BusinessTypeKey::CarShowroom->value => [],
+            BusinessTypeKey::CarRental->value => [],
             default => [],
         };
 
@@ -273,9 +282,9 @@ class DemoSeeder extends Seeder
                     'barcode' => '200000'.str_pad((string) ($business->id * 100 + $index), 7, '0', STR_PAD_LEFT),
                     'is_published' => true,
                     'is_available' => true,
-                    'track_stock' => $type->key !== 'restaurant',
-                    'has_modifiers' => $type->key === 'restaurant' && $index < 2,
-                    'prep_time_minutes' => $type->key === 'restaurant' ? 10 + $index * 5 : null,
+                    'track_stock' => $type->key !== BusinessTypeKey::Restaurant->value,
+                    'has_modifiers' => $type->key === BusinessTypeKey::Restaurant->value && $index < 2,
+                    'prep_time_minutes' => $type->key === BusinessTypeKey::Restaurant->value ? 10 + $index * 5 : null,
                     'attributes' => [],
                 ],
             );
@@ -291,13 +300,13 @@ class DemoSeeder extends Seeder
                         'cost_price_cents' => $cost,
                         'wholesale_price_cents' => (int) round($retail * 0.9),
                         'retail_price_cents' => $retail,
-                        'stock_qty' => $type->key === 'restaurant' ? 0 : 50,
+                        'stock_qty' => $type->key === BusinessTypeKey::Restaurant->value ? 0 : 50,
                         'low_stock_threshold' => 5,
                         'is_default' => $variantIndex === 0,
                     ],
                 );
 
-                if ($type->key === 'jewelry') {
+                if ($type->key === BusinessTypeKey::Jewelry->value) {
                     JewelryAttribute::query()->updateOrCreate(
                         ['product_variant_id' => $variant->id],
                         [
@@ -305,7 +314,7 @@ class DemoSeeder extends Seeder
                             'pricing_mode' => $variantName === '925' ? JewelryPricingMode::Fixed : JewelryPricingMode::ByWeight,
                             'weight_g' => $variantName === '925' ? null : 5.25 + $variantIndex,
                             'karat' => $variantName === '925' ? null : $variantName,
-                            'metal' => $variantName === '925' ? 'silver' : 'gold',
+                            'metal' => $variantName === '925' ? JewelryMetal::Silver->value : JewelryMetal::Gold->value,
                             'making_type' => MakingType::Fixed,
                             'making_value' => 2500,
                         ],
@@ -313,7 +322,7 @@ class DemoSeeder extends Seeder
                 }
             }
 
-            if ($type->key === 'restaurant' && $index < 2) {
+            if ($type->key === BusinessTypeKey::Restaurant->value && $index < 2) {
                 $group = ModifierGroup::query()->updateOrCreate(
                     ['business_id' => $business->id, 'product_id' => $product->id, 'sort_order' => 0],
                     [
@@ -341,13 +350,13 @@ class DemoSeeder extends Seeder
     private function createExpenses(Business $business): void
     {
         $categories = [
-            'rent' => ['en' => 'Rent', 'ar' => 'إيجار'],
-            'salaries' => ['en' => 'Salaries', 'ar' => 'رواتب'],
-            'electricity' => ['en' => 'Electricity', 'ar' => 'كهرباء'],
-            'water' => ['en' => 'Water', 'ar' => 'مياه'],
-            'maintenance' => ['en' => 'Maintenance', 'ar' => 'صيانة'],
-            'marketing' => ['en' => 'Marketing', 'ar' => 'تسويق'],
-            'other' => ['en' => 'Other', 'ar' => 'أخرى'],
+            ExpenseCategoryKey::Rent->value => ['en' => 'Rent', 'ar' => 'إيجار'],
+            ExpenseCategoryKey::Salaries->value => ['en' => 'Salaries', 'ar' => 'رواتب'],
+            ExpenseCategoryKey::Electricity->value => ['en' => 'Electricity', 'ar' => 'كهرباء'],
+            ExpenseCategoryKey::Water->value => ['en' => 'Water', 'ar' => 'مياه'],
+            ExpenseCategoryKey::Maintenance->value => ['en' => 'Maintenance', 'ar' => 'صيانة'],
+            ExpenseCategoryKey::Marketing->value => ['en' => 'Marketing', 'ar' => 'تسويق'],
+            ExpenseCategoryKey::Other->value => ['en' => 'Other', 'ar' => 'أخرى'],
         ];
 
         foreach ($categories as $key => $name) {
@@ -356,16 +365,16 @@ class DemoSeeder extends Seeder
                 ['name' => $name, 'is_system' => true],
             );
 
-            if (in_array($key, ['rent', 'electricity'], true)) {
+            if (in_array($key, [ExpenseCategoryKey::Rent->value, ExpenseCategoryKey::Electricity->value], true)) {
                 Expense::query()->updateOrCreate(
                     ['business_id' => $business->id, 'expense_category_id' => $category->id, 'expense_date' => now()->startOfMonth()->toDateString()],
                     [
-                        'amount_cents' => $key === 'rent' ? 250000 : 18000,
+                        'amount_cents' => $key === ExpenseCategoryKey::Rent->value ? 250000 : 18000,
                         'description' => $name['en'].' — '.now()->format('F Y'),
-                        'source' => 'manual',
-                        'is_recurring' => $key === 'rent',
-                        'recurrence' => $key === 'rent' ? 'monthly' : null,
-                        'next_due_date' => $key === 'rent' ? now()->addMonth()->startOfMonth()->toDateString() : null,
+                        'source' => ExpenseSource::Manual,
+                        'is_recurring' => $key === ExpenseCategoryKey::Rent->value,
+                        'recurrence' => $key === ExpenseCategoryKey::Rent->value ? ExpenseRecurrence::Monthly->value : null,
+                        'next_due_date' => $key === ExpenseCategoryKey::Rent->value ? now()->addMonth()->startOfMonth()->toDateString() : null,
                     ],
                 );
             }
@@ -408,7 +417,7 @@ class DemoSeeder extends Seeder
                     'purchase_price_cents' => $purchase * 100,
                     'listing_price_cents' => $listing * 100,
                     'status' => $status,
-                    'purpose' => 'sale',
+                    'purpose' => VehiclePurpose::Sale->value,
                     'buyer_client_id' => $status === VehicleStatus::Sold ? $client->id : null,
                     'sold_price_cents' => $status === VehicleStatus::Sold ? 45500 * 100 : null,
                     'sold_at' => $status === VehicleStatus::Sold ? now()->subDays(5) : null,
@@ -447,7 +456,7 @@ class DemoSeeder extends Seeder
                     'purchase_price_cents' => $price * 100,
                     'listing_price_cents' => 0,
                     'status' => $status,
-                    'purpose' => 'rental',
+                    'purpose' => VehiclePurpose::Rental->value,
                 ],
             );
 
@@ -459,12 +468,12 @@ class DemoSeeder extends Seeder
                         'client_id' => $client->id,
                         'starts_at' => now()->subDays(2),
                         'ends_at' => now()->addDays(5),
-                        'rate_type' => 'daily',
+                        'rate_type' => RentalRateType::Daily->value,
                         'rate_cents' => 12000,
                         'deposit_cents' => 50000,
                         'odometer_out' => 25000,
                         'total_cents' => 84000,
-                        'status' => 'active',
+                        'status' => RentalStatus::Active,
                         'paid_at' => now()->subDays(2),
                     ],
                 );
@@ -521,7 +530,7 @@ class DemoSeeder extends Seeder
             );
         }
 
-        if (in_array($business->businessType->key, ['restaurant', 'grocery'], true)) {
+        if (in_array($business->businessType->key, [BusinessTypeKey::Restaurant->value, BusinessTypeKey::Grocery->value], true)) {
             $this->createOrder($business, $variants->first());
         }
     }

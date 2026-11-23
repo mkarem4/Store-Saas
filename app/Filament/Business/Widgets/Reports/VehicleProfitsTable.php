@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Widgets\Reports;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Services\ReportService;
 use Filament\Tables\Columns\TextColumn;
@@ -15,7 +16,7 @@ class VehicleProfitsTable extends ReportTable
 
     public static function canView(): bool
     {
-        return BusinessPanel::isType(['car_showroom']);
+        return BusinessPanel::isType([BusinessTypeKey::CarShowroom->value]);
     }
 
     protected function heading(): string

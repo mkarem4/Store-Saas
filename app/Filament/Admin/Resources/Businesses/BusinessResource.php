@@ -18,6 +18,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -58,50 +59,67 @@ class BusinessResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
-            Section::make(__('Store'))->columns(2)->schema([
-                Select::make('business_type_id')
-                    ->label(__('Business type'))
-                    ->options(fn (): array => BusinessType::query()->where('is_active', true)->orderBy('sort_order')->get()
-                        ->mapWithKeys(fn (BusinessType $type): array => [$type->id => $type->translatedName()])->all())
-                    ->required()
-                    ->disabledOn('edit')
-                    ->helperText(__('The type sets the screens and fields the store gets. It cannot change later.')),
-                Select::make('status')->label(__('Status'))->options(BusinessStatus::class)->default(BusinessStatus::Active)->required(),
-                Fields::translatable('name', __('Store name')),
-                Fields::translatable('description', __('Description'), required: false, textarea: true),
-                SpatieMediaLibraryFileUpload::make('logo')->label(__('Logo'))->collection('logo')->image()->imageEditor(),
-                SpatieMediaLibraryFileUpload::make('cover')->label(__('Cover image'))->collection('cover')->image(),
-            ]),
-            Section::make(__('Contact & location'))->columns(2)->schema([
-                TextInput::make('phone')->label(__('Phone'))->tel(),
-                TextInput::make('email')->label(__('Email'))->email(),
-                TextInput::make('website')->label(__('Website'))->url(),
-                TextInput::make('address_line')->label(__('Address'))->columnSpanFull(),
-                TextInput::make('city')->label(__('City')),
-                Select::make('country')->label(__('Country'))->options(['US' => __('United States'), 'JO' => __('Jordan')])->default('US')->required()->live(),
-                TextInput::make('state')->label(__('State / region'))
-                    ->datalist(Fields::usStates())
-                    ->helperText(__('Sets the sales tax rate.')),
-                TextInput::make('postal_code')->label(__('Postal code')),
-                TextInput::make('latitude')->label(__('Latitude'))->numeric()->minValue(-90)->maxValue(90)
-                    ->helperText(__('Used for delivery distance and the attendance geofence.')),
-                TextInput::make('longitude')->label(__('Longitude'))->numeric()->minValue(-180)->maxValue(180),
-                Select::make('timezone')->label(__('Timezone'))->options(Fields::timezones())->searchable()->default('America/New_York')->required(),
-                Select::make('currency')->label(__('Currency'))->options(['USD' => 'USD', 'JOD' => 'JOD'])->default('USD')->required(),
-            ]),
-            Section::make(__('Store owner account'))
-                ->columnSpanFull()
-                ->description(__('The owner signs in to the store dashboard with this email and the temporary password, then chooses their own.'))
-                ->columns(3)
-                ->visibleOn('create')
-                ->schema([
-                    TextInput::make('owner_name')->label(__('Owner name'))->required()->dehydrated(false),
-                    TextInput::make('owner_email')->label(__('Owner email'))->email()->required()->dehydrated(false)
-                        ->unique(User::class, 'email'),
-                    TextInput::make('owner_password')->label(__('Temporary password'))->required()->dehydrated(false)
-                        ->default(fn (): string => Str::password(12, symbols: false))->minLength(8),
+        // Main column: what the store is and where it is. Side column: status, regional settings, branding.
+        return $schema->columns(['default' => 1, 'lg' => 3])->components([
+            Group::make([
+                Section::make(__('Store'))->schema([
+                    Fields::translatable('name', __('Store name')),
+                    Fields::translatable('description', __('Description'), required: false, textarea: true),
                 ]),
+                Section::make(__('Contact'))->columns(2)->schema([
+                    TextInput::make('phone')->label(__('Phone'))->tel(),
+                    TextInput::make('email')->label(__('Email'))->email(),
+                    TextInput::make('website')->label(__('Website'))->url()->columnSpanFull(),
+                ]),
+                Section::make(__('Address'))
+                    ->description(__('Country and state set the sales tax rate.'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('address_line')->label(__('Street address'))->columnSpanFull(),
+                        TextInput::make('city')->label(__('City')),
+                        TextInput::make('postal_code')->label(__('Postal code')),
+                        Select::make('country')->label(__('Country'))->options(['US' => __('United States'), 'JO' => __('Jordan')])->default('US')->required()->live(),
+                        TextInput::make('state')->label(__('State / region'))->datalist(Fields::usStates()),
+                    ]),
+                Section::make(__('Map location'))
+                    ->description(__('Used for delivery distance and the attendance geofence.'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('latitude')->label(__('Latitude'))->numeric()->minValue(-90)->maxValue(90),
+                        TextInput::make('longitude')->label(__('Longitude'))->numeric()->minValue(-180)->maxValue(180),
+                    ]),
+                Section::make(__('Store owner account'))
+                    ->description(__('The owner signs in to the store dashboard with this email and the temporary password, then chooses their own.'))
+                    ->columns(2)
+                    ->visibleOn('create')
+                    ->schema([
+                        TextInput::make('owner_name')->label(__('Owner name'))->required()->dehydrated(false),
+                        TextInput::make('owner_email')->label(__('Owner email'))->email()->required()->dehydrated(false)
+                            ->unique(User::class, 'email'),
+                        TextInput::make('owner_password')->label(__('Temporary password'))->required()->dehydrated(false)
+                            ->default(fn (): string => Str::password(12, symbols: false))->minLength(8),
+                    ]),
+            ])->columnSpan(['lg' => 2]),
+            Group::make([
+                Section::make(__('Status & type'))->schema([
+                    Select::make('status')->label(__('Status'))->options(BusinessStatus::class)->default(BusinessStatus::Active)->required(),
+                    Select::make('business_type_id')
+                        ->label(__('Business type'))
+                        ->options(fn (): array => BusinessType::query()->where('is_active', true)->orderBy('sort_order')->get()
+                            ->mapWithKeys(fn (BusinessType $type): array => [$type->id => $type->translatedName()])->all())
+                        ->required()
+                        ->disabledOn('edit')
+                        ->helperText(__('The type sets the screens and fields the store gets. It cannot change later.')),
+                ]),
+                Section::make(__('Regional settings'))->schema([
+                    Select::make('timezone')->label(__('Timezone'))->options(Fields::timezones())->searchable()->default('America/New_York')->required(),
+                    Select::make('currency')->label(__('Currency'))->options(['USD' => 'USD', 'JOD' => 'JOD'])->default('USD')->required(),
+                ]),
+                Section::make(__('Branding'))->schema([
+                    SpatieMediaLibraryFileUpload::make('logo')->label(__('Logo'))->collection('logo')->image()->imageEditor(),
+                    SpatieMediaLibraryFileUpload::make('cover')->label(__('Cover image'))->collection('cover')->image(),
+                ]),
+            ])->columnSpan(['lg' => 1]),
         ]);
     }
 

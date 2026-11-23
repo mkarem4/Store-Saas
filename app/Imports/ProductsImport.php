@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\ProductUnit;
 use App\Models\Business;
 use App\Models\Category;
@@ -98,7 +99,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             'name' => ['en' => $nameEn, 'ar' => (string) ($row['name_ar'] ?? '') ?: $nameEn],
             'is_published' => ! in_array(strtolower((string) ($row['published'] ?? 'yes')), ['0', 'no', 'false'], true),
             'is_available' => true,
-            'track_stock' => $this->business->businessType?->key !== 'restaurant',
+            'track_stock' => $this->business->businessType?->key !== BusinessTypeKey::Restaurant->value,
         ], $prices + [
             'sku' => $sku,
             'barcode' => filled($row['barcode'] ?? null) ? (string) $row['barcode'] : null,

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Business\Resources\Products\Schemas;
 
+use App\Enums\BusinessTypeKey;
+use App\Enums\JewelryMetal;
 use App\Enums\JewelryPricingMode;
 use App\Enums\MakingType;
 use App\Enums\ProductUnit;
@@ -33,38 +35,38 @@ final class VariantForm
         $unique = fn (string $column) => fn (Unique $rule) => $rule->where('business_id', $businessId)->when($ignoreId, fn ($rule) => $rule->whereNot('id', $ignoreId));
 
         $components = [
-            Grid::make(4)->schema([
+            Grid::make(['default' => 1, 'sm' => 2])->schema([
                 TextInput::make("{$prefix}sku")->label(__('SKU'))->maxLength(64)
                     ->unique('product_variants', 'sku', ignoreRecord: ! $creating, modifyRuleUsing: $unique('sku')),
                 TextInput::make("{$prefix}barcode")->label(__('Barcode'))->maxLength(64)
                     ->unique('product_variants', 'barcode', ignoreRecord: ! $creating, modifyRuleUsing: $unique('barcode')),
                 Select::make("{$prefix}unit")->label(__('Sold by'))->options(ProductUnit::class)->default(ProductUnit::Piece)->required()
-                    ->visible($type === 'grocery')
+                    ->visible($type === BusinessTypeKey::Grocery->value)
                     ->helperText(__('Kilogram allows weights like 1.250.')),
                 TextInput::make("{$prefix}low_stock_threshold")->label(__('Low stock alert at'))->numeric()->minValue(0)
-                    ->visible($type !== 'restaurant'),
+                    ->visible($type !== BusinessTypeKey::Restaurant->value),
             ]),
-            Grid::make(3)->schema([
+            Grid::make(['default' => 1, 'sm' => 3])->schema([
                 MoneyInput::make("{$prefix}cost_price_cents")->label(__('Cost'))
                     ->helperText($creating ? __('Purchase cost per unit.') : __('Weighted average; updated by stock receipts.'))
-                    ->disabled(! $creating && $type !== 'restaurant')
-                    ->dehydrated($creating || $type === 'restaurant'),
-                MoneyInput::make("{$prefix}wholesale_price_cents")->label(__('Wholesale price'))->visible($type !== 'restaurant'),
+                    ->disabled(! $creating && $type !== BusinessTypeKey::Restaurant->value)
+                    ->dehydrated($creating || $type === BusinessTypeKey::Restaurant->value),
+                MoneyInput::make("{$prefix}wholesale_price_cents")->label(__('Wholesale price'))->visible($type !== BusinessTypeKey::Restaurant->value),
                 MoneyInput::make("{$prefix}retail_price_cents")->label(__('Retail price'))->required(),
             ]),
         ];
 
-        if ($creating && $type !== 'restaurant') {
-            $components[] = Grid::make(3)->schema([
+        if ($creating && $type !== BusinessTypeKey::Restaurant->value) {
+            $components[] = Grid::make(['default' => 1, 'sm' => 2])->schema([
                 TextInput::make("{$prefix}opening_qty")->label(__('Opening stock'))->numeric()->minValue(0)->default(0)
                     ->helperText(__('Received at the cost above.')),
-                DatePicker::make("{$prefix}expiry_date")->label(__('Expiry date'))->visible($type === 'grocery'),
+                DatePicker::make("{$prefix}expiry_date")->label(__('Expiry date'))->visible($type === BusinessTypeKey::Grocery->value),
             ]);
-        } elseif ($type === 'grocery') {
+        } elseif ($type === BusinessTypeKey::Grocery->value) {
             $components[] = DatePicker::make("{$prefix}expiry_date")->label(__('Expiry date'));
         }
 
-        if ($type === 'jewelry') {
+        if ($type === BusinessTypeKey::Jewelry->value) {
             $components[] = self::jewelry("{$prefix}jewelry.");
         }
 
@@ -82,7 +84,7 @@ final class VariantForm
                 ->required(fn (Get $get): bool => self::byWeight($get("{$prefix}pricing_mode"))),
             Select::make("{$prefix}karat")->label(__('Karat'))->options(array_combine($karats, array_map(fn ($k) => $k.'K', $karats)))
                 ->required(fn (Get $get): bool => self::byWeight($get("{$prefix}pricing_mode"))),
-            TextInput::make("{$prefix}metal")->label(__('Metal'))->default('gold'),
+            TextInput::make("{$prefix}metal")->label(__('Metal'))->default(JewelryMetal::Gold->value),
             Select::make("{$prefix}making_type")->label(__('Making charge'))->options(MakingType::class)->default(MakingType::Fixed)->live(),
             // Stored ×100 in both modes: cents for an amount, basis points for a percentage.
             TextInput::make("{$prefix}making_value")->label(__('Making value'))->numeric()->minValue(0)->default(0)->step('0.01')

@@ -54,15 +54,17 @@ class PayrollRunResource extends BusinessResource
     {
         $currency = BusinessPanel::currency();
 
-        return $schema->columns(5)->components([
-            TextEntry::make('period')->label(__('Period'))->state(fn (PayrollRun $record): string => $record->period_start->toDateString().' → '.$record->period_end->toDateString()),
-            TextEntry::make('status')->label(__('Status'))->badge()->color(fn (string $state): string => $state === 'approved' ? 'success' : 'warning'),
-            TextEntry::make('gross_cents')->label(__('Base + allowances'))->money($currency, divideBy: 100),
-            TextEntry::make('commission_cents')->label(__('Commissions'))->money($currency, divideBy: 100),
-            TextEntry::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100),
-            TextEntry::make('unreviewed')->label(__('Attendance to review'))->columnSpanFull()->color('danger')
-                ->state(fn (PayrollRun $record): int => app(PayrollService::class)->unreviewedEntries($record))
-                ->visible(fn (PayrollRun $record): bool => ! $record->isApproved() && app(PayrollService::class)->unreviewedEntries($record) > 0),
+        return $schema->columns(1)->components([
+            Section::make(__('Details'))->columnSpanFull()->columns(['default' => 1, 'sm' => 2, 'lg' => 5])->schema([
+                TextEntry::make('period')->label(__('Period'))->state(fn (PayrollRun $record): string => $record->period_start->toDateString().' → '.$record->period_end->toDateString()),
+                TextEntry::make('status')->label(__('Status'))->badge()->color(fn (string $state): string => $state === 'approved' ? 'success' : 'warning'),
+                TextEntry::make('gross_cents')->label(__('Base + allowances'))->money($currency, divideBy: 100),
+                TextEntry::make('commission_cents')->label(__('Commissions'))->money($currency, divideBy: 100),
+                TextEntry::make('total_cents')->label(__('Total'))->money($currency, divideBy: 100),
+                TextEntry::make('unreviewed')->label(__('Attendance to review'))->columnSpanFull()->color('danger')
+                    ->state(fn (PayrollRun $record): int => app(PayrollService::class)->unreviewedEntries($record))
+                    ->visible(fn (PayrollRun $record): bool => ! $record->isApproved() && app(PayrollService::class)->unreviewedEntries($record) > 0),
+            ]),
         ]);
     }
 

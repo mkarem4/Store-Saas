@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Categories;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Filament\Support\Fields;
@@ -26,7 +27,7 @@ class CategoryResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageCatalog;
 
-    protected static array $exceptTypes = ['car_showroom', 'car_rental'];
+    protected static array $exceptTypes = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 

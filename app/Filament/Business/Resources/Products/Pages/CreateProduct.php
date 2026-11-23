@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Products\Pages;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\Resources\Products\ProductResource;
 use App\Services\CatalogService;
@@ -17,7 +18,7 @@ class CreateProduct extends CreateRecord
     {
         $variant = Arr::pull($data, 'variant', []);
 
-        if (BusinessPanel::typeKey() === 'restaurant') {
+        if (BusinessPanel::typeKey() === BusinessTypeKey::Restaurant->value) {
             $data['track_stock'] = false;
         }
 

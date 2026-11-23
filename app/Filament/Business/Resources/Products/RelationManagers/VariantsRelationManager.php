@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Products\RelationManagers;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\StockMovementType;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\Resources\Products\Schemas\VariantForm;
@@ -79,7 +80,7 @@ class VariantsRelationManager extends RelationManager
                 TextColumn::make('stock_qty')->label(__('Stock'))->visible($tracksStock)->numeric(3)
                     ->color(fn (ProductVariant $record): ?string => $record->isLowStock() ? 'danger' : null),
                 TextColumn::make('reserved_qty')->label(__('Reserved'))->visible($tracksStock)->numeric(3)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('expiry_date')->label(__('Expires'))->date()->visible(BusinessPanel::typeKey() === 'grocery')
+                TextColumn::make('expiry_date')->label(__('Expires'))->date()->visible(BusinessPanel::typeKey() === BusinessTypeKey::Grocery->value)
                     ->color(fn (ProductVariant $record): ?string => $record->isExpiringSoon() ? 'warning' : null),
             ])
             ->headerActions([

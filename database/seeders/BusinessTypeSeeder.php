@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\BusinessTypeKey;
+use App\Enums\JewelryMetal;
+use App\Enums\JewelryPricingMode;
+use App\Enums\ProductUnit;
 use App\Models\BusinessType;
 use Illuminate\Database\Seeder;
 
@@ -11,7 +15,7 @@ class BusinessTypeSeeder extends Seeder
     {
         $types = [
             [
-                'key' => 'car_showroom',
+                'key' => BusinessTypeKey::CarShowroom->value,
                 'name' => ['en' => 'Car Showroom', 'ar' => 'معرض سيارات'],
                 'icon' => 'heroicon-o-truck',
                 'fields' => [
@@ -28,7 +32,7 @@ class BusinessTypeSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'electronics',
+                'key' => BusinessTypeKey::Electronics->value,
                 'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
                 'icon' => 'heroicon-o-device-phone-mobile',
                 'fields' => [
@@ -38,7 +42,7 @@ class BusinessTypeSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'car_rental',
+                'key' => BusinessTypeKey::CarRental->value,
                 'name' => ['en' => 'Car Rental', 'ar' => 'تأجير سيارات'],
                 'icon' => 'heroicon-o-key',
                 'fields' => [
@@ -51,20 +55,20 @@ class BusinessTypeSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'jewelry',
+                'key' => BusinessTypeKey::Jewelry->value,
                 'name' => ['en' => 'Jewelry', 'ar' => 'مجوهرات'],
                 'icon' => 'heroicon-o-sparkles',
                 'fields' => [
-                    $this->field('pricing_mode', 'Pricing mode', 'طريقة التسعير', 'select', true, ['fixed', 'by_weight']),
+                    $this->field('pricing_mode', 'Pricing mode', 'طريقة التسعير', 'select', true, [JewelryPricingMode::Fixed->value, JewelryPricingMode::ByWeight->value]),
                     $this->field('weight_g', 'Weight (g)', 'الوزن (جرام)', 'number'),
                     $this->field('karat', 'Karat', 'العيار', 'select', false, ['18', '21', '22', '24']),
-                    $this->field('metal', 'Metal', 'المعدن', 'select', false, ['gold', 'silver', 'platinum']),
+                    $this->field('metal', 'Metal', 'المعدن', 'select', false, [JewelryMetal::Gold->value, JewelryMetal::Silver->value, JewelryMetal::Platinum->value]),
                     $this->field('making_value', 'Making charge', 'المصنعية', 'number'),
                     $this->field('certificate_number', 'Certificate number', 'رقم الشهادة', 'text'),
                 ],
             ],
             [
-                'key' => 'perfume',
+                'key' => BusinessTypeKey::Perfume->value,
                 'name' => ['en' => 'Perfume', 'ar' => 'عطور'],
                 'icon' => 'heroicon-o-beaker',
                 'fields' => [
@@ -75,7 +79,7 @@ class BusinessTypeSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'clothing',
+                'key' => BusinessTypeKey::Clothing->value,
                 'name' => ['en' => 'Clothing', 'ar' => 'ملابس'],
                 'icon' => 'heroicon-o-shopping-bag',
                 'fields' => [
@@ -87,18 +91,18 @@ class BusinessTypeSeeder extends Seeder
                 ],
             ],
             [
-                'key' => 'grocery',
+                'key' => BusinessTypeKey::Grocery->value,
                 'name' => ['en' => 'Grocery', 'ar' => 'بقالة'],
                 'icon' => 'heroicon-o-shopping-cart',
                 'fields' => [
-                    $this->field('unit', 'Unit', 'الوحدة', 'select', true, ['piece', 'carton', 'kg']),
+                    $this->field('unit', 'Unit', 'الوحدة', 'select', true, [ProductUnit::Piece->value, ProductUnit::Carton->value, ProductUnit::Kilogram->value]),
                     $this->field('barcode', 'Barcode', 'الباركود', 'text'),
                     $this->field('expiry_date', 'Expiry date', 'تاريخ الصلاحية', 'date'),
                     $this->field('low_stock_threshold', 'Low stock threshold', 'حد المخزون المنخفض', 'number'),
                 ],
             ],
             [
-                'key' => 'restaurant',
+                'key' => BusinessTypeKey::Restaurant->value,
                 'name' => ['en' => 'Restaurant', 'ar' => 'مطعم'],
                 'icon' => 'heroicon-o-cake',
                 'fields' => [

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AttendanceMode;
 use App\Enums\BusinessStatus;
+use App\Enums\UserRole;
 use App\Models\Concerns\HasTranslations;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -111,7 +112,7 @@ class Business extends Model implements HasMedia, HasName
 
     public function owner(): HasOne
     {
-        return $this->hasOne(User::class)->where('role', 'business_owner');
+        return $this->hasOne(User::class)->where('role', UserRole::BusinessOwner->value);
     }
 
     public function categories()

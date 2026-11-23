@@ -2,7 +2,9 @@
 
 namespace App\Filament\Business\Resources\Vehicles;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\PaymentMethod;
+use App\Enums\VehiclePurpose;
 use App\Enums\VehicleStatus;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
@@ -42,7 +44,7 @@ class VehicleResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageVehicles;
 
-    protected static array $types = ['car_showroom', 'car_rental'];
+    protected static array $types = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;
 
@@ -50,7 +52,7 @@ class VehicleResource extends BusinessResource
 
     public static function getNavigationGroup(): string|UnitEnum|null
     {
-        return BusinessPanel::typeKey() === 'car_rental' ? __('Rentals') : __('Vehicles');
+        return BusinessPanel::typeKey() === BusinessTypeKey::CarRental->value ? __('Rentals') : __('Vehicles');
     }
 
     public static function getModelLabel(): string
@@ -60,17 +62,17 @@ class VehicleResource extends BusinessResource
 
     public static function getPluralModelLabel(): string
     {
-        return BusinessPanel::typeKey() === 'car_rental' ? __('Fleet') : __('Vehicles');
+        return BusinessPanel::typeKey() === BusinessTypeKey::CarRental->value ? __('Fleet') : __('Vehicles');
     }
 
     public static function purpose(): string
     {
-        return BusinessPanel::typeKey() === 'car_rental' ? 'rental' : 'sale';
+        return BusinessPanel::typeKey() === BusinessTypeKey::CarRental->value ? VehiclePurpose::Rental->value : VehiclePurpose::Sale->value;
     }
 
     public static function form(Schema $schema): Schema
     {
-        $isRental = self::purpose() === 'rental';
+        $isRental = self::purpose() === VehiclePurpose::Rental->value;
         $businessId = BusinessPanel::business()?->id;
 
         return $schema->columns(3)->components([
@@ -106,7 +108,7 @@ class VehicleResource extends BusinessResource
     public static function table(Table $table): Table
     {
         $currency = BusinessPanel::currency();
-        $isRental = self::purpose() === 'rental';
+        $isRental = self::purpose() === VehiclePurpose::Rental->value;
 
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->where('purpose', self::purpose())->withSum('costs', 'amount_cents'))
@@ -151,7 +153,7 @@ class VehicleResource extends BusinessResource
             ->label(__('Sell'))
             ->icon(Heroicon::OutlinedBanknotes)
             ->color('success')
-            ->visible(fn (Vehicle $record): bool => $record->purpose === 'sale' && in_array($record->status, [VehicleStatus::Available, VehicleStatus::Reserved], true))
+            ->visible(fn (Vehicle $record): bool => $record->purpose === VehiclePurpose::Sale->value && in_array($record->status, [VehicleStatus::Available, VehicleStatus::Reserved], true))
             ->fillForm(fn (Vehicle $record): array => ['sold_price_cents' => $record->listing_price_cents])
             ->schema([
                 ClientSelect::make()->label(__('Buyer')),

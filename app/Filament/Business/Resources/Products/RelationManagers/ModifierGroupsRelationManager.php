@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\Products\RelationManagers;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Forms\Components\MoneyInput;
 use App\Filament\Support\Fields;
@@ -45,7 +46,7 @@ class ModifierGroupsRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return BusinessPanel::typeKey() === 'restaurant';
+        return BusinessPanel::typeKey() === BusinessTypeKey::Restaurant->value;
     }
 
     public function form(Schema $schema): Schema

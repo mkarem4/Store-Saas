@@ -2,8 +2,11 @@
 
 namespace App\Filament\Business\Resources\RentalContracts;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\PaymentMethod;
+use App\Enums\RentalRateType;
 use App\Enums\RentalStatus;
+use App\Enums\VehiclePurpose;
 use App\Enums\VehicleStatus;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
@@ -25,6 +28,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -45,7 +49,7 @@ class RentalContractResource extends BusinessResource
 
     protected static ?string $permission = Permission::ManageRentals;
 
-    protected static array $types = ['car_rental'];
+    protected static array $types = [BusinessTypeKey::CarRental->value];
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
@@ -72,7 +76,7 @@ class RentalContractResource extends BusinessResource
     {
         $rate = function (Get $get, Set $set): void {
             $vehicle = Vehicle::query()->find($get('vehicle_id'));
-            $key = ($get('rate_type') ?: 'daily').'_rate_cents';
+            $key = ($get('rate_type') ?: RentalRateType::Daily->value).'_rate_cents';
             $cents = (int) ($vehicle?->attributes[$key] ?? 0);
 
             if ($cents > 0) {
@@ -80,19 +84,26 @@ class RentalContractResource extends BusinessResource
             }
         };
 
-        return $schema->columns(3)->components([
-            Select::make('vehicle_id')->label(__('Vehicle'))->required()->searchable()->live()
-                ->options(fn (): array => Vehicle::query()->where('purpose', 'rental')->whereNotIn('status', [VehicleStatus::Sold, VehicleStatus::Maintenance])
-                    ->get()->mapWithKeys(fn (Vehicle $vehicle): array => [$vehicle->id => $vehicle->displayName().' · '.($vehicle->plate_number ?: $vehicle->vin)])->all())
-                ->afterStateUpdated($rate),
-            ClientSelect::make(),
-            DateTimePicker::make('starts_at')->label(__('Pickup'))->default(now())->required()->seconds(false),
-            DateTimePicker::make('ends_at')->label(__('Return'))->default(now()->addDay())->required()->after('starts_at')->seconds(false),
-            Select::make('rate_type')->label(__('Rate'))->options(['daily' => __('Daily'), 'weekly' => __('Weekly'), 'monthly' => __('Monthly')])->default('daily')->required()->live()
-                ->afterStateUpdated($rate),
-            MoneyInput::make('rate_cents')->label(__('Rate amount'))->required(),
-            MoneyInput::make('deposit_cents')->label(__('Deposit'))->default(0)->helperText(__('Held, not revenue.')),
-            Textarea::make('notes')->label(__('Notes'))->columnSpanFull(),
+        // Main column: who rents what and when. Side column: the money.
+        return $schema->columns(['default' => 1, 'lg' => 3])->components([
+            Group::make([
+                Section::make(__('Contract'))->columns(2)->schema([
+                    Select::make('vehicle_id')->label(__('Vehicle'))->required()->searchable()->live()
+                        ->options(fn (): array => Vehicle::query()->where('purpose', VehiclePurpose::Rental->value)->whereNotIn('status', [VehicleStatus::Sold, VehicleStatus::Maintenance])
+                            ->get()->mapWithKeys(fn (Vehicle $vehicle): array => [$vehicle->id => $vehicle->displayName().' · '.($vehicle->plate_number ?: $vehicle->vin)])->all())
+                        ->afterStateUpdated($rate),
+                    ClientSelect::make(),
+                    DateTimePicker::make('starts_at')->label(__('Pickup'))->default(now())->required()->seconds(false),
+                    DateTimePicker::make('ends_at')->label(__('Return'))->default(now()->addDay())->required()->after('starts_at')->seconds(false),
+                    Textarea::make('notes')->label(__('Notes'))->columnSpanFull(),
+                ]),
+            ])->columnSpan(['lg' => 2]),
+            Section::make(__('Pricing'))->columnSpan(['lg' => 1])->schema([
+                Select::make('rate_type')->label(__('Rate'))->options(RentalRateType::class)->default(RentalRateType::Daily->value)->required()->live()
+                    ->afterStateUpdated($rate),
+                MoneyInput::make('rate_cents')->label(__('Rate amount'))->required(),
+                MoneyInput::make('deposit_cents')->label(__('Deposit'))->default(0)->helperText(__('Held, not revenue.')),
+            ]),
         ]);
     }
 
@@ -100,25 +111,33 @@ class RentalContractResource extends BusinessResource
     {
         $currency = BusinessPanel::currency();
 
-        return $schema->columns(4)->components([
-            TextEntry::make('contract_number')->label(__('Contract #')),
-            TextEntry::make('status')->label(__('Status'))->badge(),
-            TextEntry::make('vehicle')->label(__('Vehicle'))->state(fn (RentalContract $record): string => (string) $record->vehicle?->displayName()),
-            TextEntry::make('client.name')->label(__('Client'))->formatStateUsing(fn (RentalContract $record): string => $record->client->name.' · '.$record->client->phone),
-            TextEntry::make('client.id_number')->label(__('ID number'))->placeholder('—'),
-            TextEntry::make('client.license_number')->label(__('License #'))->placeholder('—'),
-            TextEntry::make('starts_at')->label(__('Pickup'))->dateTime(),
-            TextEntry::make('ends_at')->label(__('Return'))->dateTime(),
-            Section::make(__('Money'))->columnSpanFull()->columns(4)->schema([
+        return $schema->columns(['default' => 1, 'lg' => 3])->components([
+            Group::make([
+                Section::make(__('Contract'))->columns(['default' => 1, 'sm' => 2])->schema([
+                    TextEntry::make('contract_number')->label(__('Contract #')),
+                    TextEntry::make('status')->label(__('Status'))->badge(),
+                    TextEntry::make('vehicle')->label(__('Vehicle'))->state(fn (RentalContract $record): string => (string) $record->vehicle?->displayName()),
+                    TextEntry::make('payment_method')->label(__('Paid by'))->badge()->placeholder('—'),
+                    TextEntry::make('starts_at')->label(__('Pickup'))->dateTime(),
+                    TextEntry::make('ends_at')->label(__('Return'))->dateTime(),
+                ]),
+                Section::make(__('Client'))->columns(['default' => 1, 'sm' => 3])->schema([
+                    TextEntry::make('client.name')->label(__('Name'))->formatStateUsing(fn (RentalContract $record): string => $record->client->name.' · '.$record->client->phone),
+                    TextEntry::make('client.id_number')->label(__('ID number'))->placeholder('—'),
+                    TextEntry::make('client.license_number')->label(__('License #'))->placeholder('—'),
+                ]),
+                Section::make(__('Handover'))->columns(['default' => 1, 'sm' => 3])->schema([
+                    TextEntry::make('odometer_out')->label(__('Odometer out'))->numeric()->placeholder('—'),
+                    TextEntry::make('odometer_in')->label(__('Odometer in'))->numeric()->placeholder('—'),
+                    TextEntry::make('extra_charges_note')->label(__('Charges note'))->placeholder('—'),
+                ]),
+            ])->columnSpan(['lg' => 2]),
+            Section::make(__('Money'))->columnSpan(['lg' => 1])->schema([
                 TextEntry::make('total_cents')->label(__('Rental total'))->money($currency, divideBy: 100),
                 TextEntry::make('deposit_cents')->label(__('Deposit'))->money($currency, divideBy: 100),
                 TextEntry::make('extra_charges_cents')->label(__('Extra charges'))->money($currency, divideBy: 100),
                 TextEntry::make('deposit_returned_cents')->label(__('Deposit returned'))->money($currency, divideBy: 100),
             ]),
-            TextEntry::make('odometer_out')->label(__('Odometer out'))->numeric()->placeholder('—'),
-            TextEntry::make('odometer_in')->label(__('Odometer in'))->numeric()->placeholder('—'),
-            TextEntry::make('extra_charges_note')->label(__('Charges note'))->placeholder('—'),
-            TextEntry::make('payment_method')->label(__('Paid by'))->badge()->placeholder('—'),
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductUnit;
 use App\Enums\SaleChannel;
 use App\Enums\SaleStatus;
 use App\Enums\VehicleStatus;
@@ -124,7 +125,7 @@ class VehicleService
                 'sale_id' => $sale->id,
                 'name' => $locked->displayName().' · '.$locked->vin,
                 'qty' => 1,
-                'unit' => 'piece',
+                'unit' => ProductUnit::Piece->value,
                 'unit_price_cents' => $soldPriceCents,
                 'unit_cost_cents' => $totalCost,
                 'total_cents' => $soldPriceCents,

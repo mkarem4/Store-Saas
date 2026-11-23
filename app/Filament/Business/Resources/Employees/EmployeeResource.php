@@ -3,6 +3,7 @@
 namespace App\Filament\Business\Resources\Employees;
 
 use App\Enums\PayType;
+use App\Enums\UserRole;
 use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Filament\Forms\Components\MoneyInput;
@@ -224,7 +225,7 @@ class EmployeeResource extends BusinessResource
     private static function staffRoles(Employee $employee): Builder
     {
         return Role::query()->where('business_id', $employee->business_id)
-            ->where('guard_name', 'web')->where('name', '!=', 'business_owner');
+            ->where('guard_name', 'web')->where('name', '!=', UserRole::BusinessOwner->value);
     }
 
     private static function staffPermissionsField(): CheckboxList

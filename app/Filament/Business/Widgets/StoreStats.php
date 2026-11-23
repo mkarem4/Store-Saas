@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Widgets;
 
+use App\Enums\BusinessTypeKey;
 use App\Enums\InquiryStatus;
 use App\Enums\OrderStatus;
 use App\Filament\Business\BusinessPanel;
@@ -49,7 +50,7 @@ class StoreStats extends StatsOverviewWidget
         // What needs doing comes first and links straight to it; figures follow.
         $stats = [];
 
-        if (! BusinessPanel::isType(['car_showroom', 'car_rental']) && BusinessPanel::can(Permission::ManageOrders)) {
+        if (! BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value]) && BusinessPanel::can(Permission::ManageOrders)) {
             $pending = Order::query()->where('status', OrderStatus::Pending)->count();
             $stats[] = Stat::make(__('Orders waiting'), $pending)
                 ->color($pending > 0 ? 'warning' : 'gray')
@@ -57,7 +58,7 @@ class StoreStats extends StatsOverviewWidget
                 ->url(OrderResource::getUrl());
         }
 
-        if (BusinessPanel::isType(['car_showroom', 'car_rental']) && BusinessPanel::can(Permission::ManageOrders)) {
+        if (BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value]) && BusinessPanel::can(Permission::ManageOrders)) {
             $newInquiries = Inquiry::query()->where('status', InquiryStatus::New)->count();
             $stats[] = Stat::make(__('New inquiries'), $newInquiries)
                 ->color($newInquiries > 0 ? 'warning' : 'gray')
@@ -65,7 +66,7 @@ class StoreStats extends StatsOverviewWidget
                 ->url(InquiryResource::getUrl());
         }
 
-        if (! BusinessPanel::isType(['car_showroom', 'car_rental', 'restaurant']) && BusinessPanel::can(Permission::ViewReports)) {
+        if (! BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value]) && BusinessPanel::can(Permission::ViewReports)) {
             $low = $reports->lowStock($business)->count();
             $stats[] = Stat::make(__('Low stock items'), $low)
                 ->color($low > 0 ? 'danger' : 'gray')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\BusinessTypes;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Admin\Resources\BusinessTypes\Pages\ManageBusinessTypes;
 use App\Filament\Support\Fields;
 use App\Models\BusinessType;
@@ -43,7 +44,7 @@ class BusinessTypeResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public const MODULE_KEYS = ['car_showroom', 'car_rental', 'restaurant', 'jewelry', 'grocery', 'clothing', 'electronics', 'perfume'];
+    public const MODULE_KEYS = [BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value, BusinessTypeKey::Jewelry->value, BusinessTypeKey::Grocery->value, BusinessTypeKey::Clothing->value, BusinessTypeKey::Electronics->value, BusinessTypeKey::Perfume->value];
 
     public static function getModelLabel(): string
     {

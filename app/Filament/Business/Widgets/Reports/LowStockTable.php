@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Widgets\Reports;
 
+use App\Enums\BusinessTypeKey;
 use App\Filament\Business\BusinessPanel;
 use App\Models\ProductVariant;
 use App\Services\ReportService;
@@ -15,7 +16,7 @@ class LowStockTable extends ReportTable
 
     public static function canView(): bool
     {
-        return ! BusinessPanel::isType(['car_showroom', 'car_rental', 'restaurant']);
+        return ! BusinessPanel::isType([BusinessTypeKey::CarShowroom->value, BusinessTypeKey::CarRental->value, BusinessTypeKey::Restaurant->value]);
     }
 
     protected function heading(): string
