@@ -9,11 +9,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Vehicle extends Model
+class Vehicle extends Model implements HasMedia
 {
     use BelongsToBusiness;
     use HasFactory;
+    use InteractsWithMedia;
     use SoftDeletes;
 
     protected $fillable = [
@@ -78,5 +81,10 @@ class Vehicle extends Model
     public function displayName(): string
     {
         return trim("{$this->year} {$this->make} {$this->model}");
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('photos');
     }
 }

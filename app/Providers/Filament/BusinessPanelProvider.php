@@ -19,7 +19,7 @@ class BusinessPanelProvider extends PanelProvider
             ->brandName(fn (): string => filament()->getTenant()?->translatedName() ?? config('app.name'))
             ->tenant(Business::class, slugAttribute: 'slug')
             ->tenantMenu(false)
-            ->navigationGroups([NavigationGroup::make(fn (): string => __('Sales')), NavigationGroup::make(fn (): string => __('Catalog')), NavigationGroup::make(fn (): string => __('Inventory')), NavigationGroup::make(fn (): string => __('Vehicles')), NavigationGroup::make(fn (): string => __('Rentals')), NavigationGroup::make(fn (): string => __('Team')), NavigationGroup::make(fn (): string => __('Finance')), NavigationGroup::make(fn (): string => __('Settings'))])
+            ->navigationGroups([NavigationGroup::make(fn (): string => __('Sales')), NavigationGroup::make(fn (): string => __('Catalog')), NavigationGroup::make(fn (): string => __('Inventory')), NavigationGroup::make(fn (): string => __('Vehicles')), NavigationGroup::make(fn (): string => __('Rentals')), NavigationGroup::make(fn (): string => __('Finance')), NavigationGroup::make(fn (): string => __('Team')), NavigationGroup::make(fn (): string => __('Settings'))])
             ->pages([Dashboard::class]);
     }
 }

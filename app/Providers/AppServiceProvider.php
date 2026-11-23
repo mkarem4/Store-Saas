@@ -6,6 +6,7 @@ use App\Contracts\DistanceCalculator;
 use App\Contracts\GoldPriceProvider;
 use App\Contracts\PaymentGateway;
 use App\Contracts\PushNotifier;
+use App\Filament\Business\BusinessPanel;
 use App\Filament\Support\TableEmptyState;
 use App\Models\User;
 use App\Services\Geo\GoogleDistanceCalculator;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\Entry;
 use Filament\Schemas\Schema;
+use Filament\Support\Facades\FilamentTimezone;
 use Filament\Tables\Columns\Column;
 use Filament\Tables\Filters\BaseFilter;
 use Filament\Tables\Filters\SelectFilter;
@@ -78,6 +80,9 @@ class AppServiceProvider extends ServiceProvider
         // Money and counts read the same in Arabic and English: western digits, "$1,234.50".
         Table::configureUsing(fn (Table $table) => $table->defaultNumberLocale('en_US'));
         Schema::configureUsing(fn (Schema $schema) => $schema->defaultNumberLocale('en_US'));
+
+        // Times in store panels show and are entered in the store's own timezone (the app runs in UTC).
+        FilamentTimezone::set(fn (): ?string => BusinessPanel::business()?->timezone);
 
         // One look for every picker: Filament's own dropdowns and calendars, never the browser's.
         Select::configureUsing(fn (Select $select) => $select

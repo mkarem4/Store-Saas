@@ -356,8 +356,8 @@ abstract class PointOfSalePage extends Page
             ->schema(fn (): array => [
                 Radio::make('method')->label(__('Payment'))->inline()->live()->required()->options([
                     'cash' => __('Cash'),
-                    'card' => __('Card'),
-                    'split' => __('Cash + card'),
+                    'card' => __('Card on the terminal'),
+                    'split' => __('Cash + card on the terminal'),
                 ]),
                 Grid::make(2)->schema([
                     MoneyInput::make('tendered_cents')->label(__('Cash given'))->live(debounce: 300)
@@ -368,7 +368,9 @@ abstract class PointOfSalePage extends Page
                         ->visible(fn (Get $get): bool => $get('method') === 'split'),
                     Text::make(fn (Get $get): string => __('Card part: :amount', ['amount' => $this->money(max(0, $this->totals()['total'] - Money::toCents($get('cash_cents'))))]))
                         ->visible(fn (Get $get): bool => $get('method') === 'split'),
+                    // The POS isn't linked to a card terminal: the card is run on the terminal and only recorded here.
                     TextInput::make('card_ref')->label(__('Card approval # (optional)'))
+                        ->helperText(__('Run the card on the store terminal first. This only records the payment.'))
                         ->visible(fn (Get $get): bool => in_array($get('method'), ['card', 'split'], true)),
                 ]),
                 ClientSelect::make(required: false)->label(__('Client (optional)')),

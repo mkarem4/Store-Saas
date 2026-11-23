@@ -830,5 +830,19 @@
     "The owner signs in to the store dashboard with this email and the temporary password, then chooses their own.": "يسجّل صاحب المحل الدخول إلى لوحة المحل بهذا البريد وكلمة المرور المؤقتة، ثم يختار كلمة مروره.",
     "Affected item": "العنصر",
     "Nothing recorded yet": "لا توجد أحداث مسجلة بعد",
-    "Store sign-ins, price changes, returns and settings changes appear here.": "يظهر هنا الدخول إلى المحلات وتغييرات الأسعار والمرتجعات وتغييرات الإعدادات."
+    "Store sign-ins, price changes, returns and settings changes appear here.": "يظهر هنا الدخول إلى المحلات وتغييرات الأسعار والمرتجعات وتغييرات الإعدادات.",
+    "Card on the terminal": "بطاقة على جهاز المحل",
+    "Cash + card on the terminal": "نقدي + بطاقة على الجهاز",
+    "Run the card on the store terminal first. This only records the payment.": "مرّر البطاقة على جهاز الدفع أولًا؛ هنا يتم تسجيل الدفعة فقط.",
+    "Accept or reject": "اقبل أو ارفض",
+    "All caught up": "لا شيء معلّق",
+    "New inquiries": "استفسارات جديدة",
+    "Call them back": "تواصل معهم",
+    "See what to reorder": "اعرف ما يجب طلبه",
+    "Stock looks fine": "المخزون جيد",
+    "Shifts to review": "ورديات للمراجعة",
+    "Closed automatically, check the hours": "أُغلقت تلقائيًا، راجع الساعات",
+    "Payouts to review": "طلبات سحب للمراجعة",
+    "Photos": "الصور",
+    "The first photo is shown in the list.": "تظهر الصورة الأولى في القائمة."
 }

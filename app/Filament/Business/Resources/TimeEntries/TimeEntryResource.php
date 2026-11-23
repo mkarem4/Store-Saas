@@ -2,6 +2,7 @@
 
 namespace App\Filament\Business\Resources\TimeEntries;
 
+use App\Filament\Business\BusinessPanel;
 use App\Filament\Business\BusinessResource;
 use App\Models\Employee;
 use App\Models\TimeEntry;
@@ -91,7 +92,7 @@ class TimeEntryResource extends BusinessResource
                         false: fn (Builder $query) => $query->where(fn (Builder $q) => $q->where('is_auto_closed', false)->orWhereNotNull('reviewed_at')),
                     ),
                 Filter::make('period')->schema([
-                    DatePicker::make('from')->label(__('From'))->default(now()->startOfMonth()),
+                    DatePicker::make('from')->label(__('From'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->startOfMonth()->toDateString()),
                     DatePicker::make('until')->label(__('Until')),
                 ])->query(fn (Builder $query, array $data) => $query
                     ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('clock_in_at', '>=', $date))

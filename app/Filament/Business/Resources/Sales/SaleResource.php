@@ -128,7 +128,7 @@ class SaleResource extends BusinessResource
                 SelectFilter::make('status')->options(SaleStatus::class),
                 SelectFilter::make('employee_id')->label(__('Employee'))->options(fn (): array => Employee::query()->pluck('name', 'id')->all()),
                 Filter::make('period')->schema([
-                    DatePicker::make('from')->label(__('From'))->default(now()->startOfMonth()),
+                    DatePicker::make('from')->label(__('From'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->startOfMonth()->toDateString()),
                     DatePicker::make('until')->label(__('Until')),
                 ])->query(fn (Builder $query, array $data) => $query
                     ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('sold_at', '>=', $date))

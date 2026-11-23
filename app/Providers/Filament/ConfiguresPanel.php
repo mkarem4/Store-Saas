@@ -23,7 +23,9 @@ trait ConfiguresPanel
 {
     /**
      * Receipt-ink blue with #1E40AF (Tailwind blue-800) as the 600 shade
-     * Filament uses for buttons and links, so the accent stays deep.
+     * Filament uses for buttons and links, so the accent stays deep. The 400
+     * shade (dark-mode links and active tabs) stays light enough to read on
+     * the dark panel.
      *
      * @return array<int, string>
      */
@@ -33,7 +35,7 @@ trait ConfiguresPanel
 
         return [
             50 => $blue[50], 100 => $blue[100], 200 => $blue[200], 300 => $blue[300],
-            400 => $blue[500], 500 => $blue[700], 600 => $blue[800], 700 => $blue[900],
+            400 => $blue[400], 500 => $blue[700], 600 => $blue[800], 700 => $blue[900],
             800 => $blue[950], 900 => $blue[950], 950 => $blue[950],
         ];
     }

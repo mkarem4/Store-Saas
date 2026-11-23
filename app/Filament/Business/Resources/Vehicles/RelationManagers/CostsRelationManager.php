@@ -47,7 +47,7 @@ class CostsRelationManager extends RelationManager
         return $schema->columns(3)->components([
             TextInput::make('description')->label(__('Description'))->required(),
             MoneyInput::make('amount_cents')->label(__('Amount'))->required(),
-            DatePicker::make('incurred_at')->label(__('Date'))->default(now())->required(),
+            DatePicker::make('incurred_at')->label(__('Date'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->toDateString())->required(),
         ]);
     }
 

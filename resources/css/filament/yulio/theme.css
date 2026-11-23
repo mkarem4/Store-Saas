@@ -30,7 +30,7 @@
 /* The page as one panel */
 @media (min-width: 64rem) {
     .fi-main-ctn {
-        @apply my-2 me-2 rounded-xl bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10;
+        @apply my-2 me-2 rounded-xl bg-white ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800;
         min-height: calc(100dvh - 1rem) !important;
     }
 }
@@ -45,7 +45,7 @@
 .fi-main .fi-section:not(.fi-section-not-contained),
 .fi-main .fi-ta-ctn,
 .fi-main .fi-wi-stats-overview-stat {
-    @apply shadow-none ring-gray-950/7 dark:ring-white/10;
+    @apply shadow-none ring-gray-200 dark:ring-gray-700;
 }
 
 .fi-header-heading {
@@ -87,7 +87,7 @@
 }
 
 .fi-sidebar .fi-sidebar-group-label {
-    @apply text-xs font-medium text-gray-500 dark:text-gray-400;
+    @apply text-xs font-medium text-gray-600 dark:text-gray-400;
 }
 
 .fi-sidebar .fi-sidebar-group-items {
@@ -115,7 +115,7 @@
 
 /* Active: the white chip of the panel, raised on the canvas */
 .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    @apply bg-white shadow-xs ring-1 ring-gray-950/5 dark:bg-white/10 dark:ring-white/10;
+    @apply bg-white ring-1 ring-gray-200 dark:bg-white/10 dark:ring-white/10;
 
     & > .fi-icon {
         @apply text-gray-950 dark:text-white;
@@ -136,7 +136,7 @@
 
 /* Search: a white field on the canvas */
 .fi-sidebar .fi-global-search-field .fi-input-wrp {
-    @apply bg-white shadow-xs ring-gray-950/8 dark:bg-white/5 dark:ring-white/10;
+    @apply bg-white shadow-none dark:bg-white/5;
 }
 
 /* Footer: notifications row and the account card */
@@ -158,6 +158,11 @@
 
 .fi-sidebar .fi-user-menu-trigger-text {
     @apply text-sm font-medium text-gray-950 dark:text-white;
+}
+
+/* Impersonation: a calm amber strip above everything, with a real button back */
+.yl-impersonation {
+    @apply sticky top-0 z-40 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 bg-warning-100 px-4 py-2 text-sm font-medium text-warning-950 ring-1 ring-warning-200 dark:bg-warning-500/15 dark:text-warning-200 dark:ring-warning-500/30;
 }
 
 /* Brand: the panel's accent carries the mark (graphite in the console, ink in stores) */
@@ -187,6 +192,37 @@
     .fi-layout-sidebar-toggle-btn-ctn {
         @apply bg-white pb-1 dark:bg-gray-900;
     }
+}
+
+/* Page padding: 24px on desktop, 16px on phones */
+.fi-main {
+    @apply px-4 lg:px-6;
+}
+
+/* Secondary text: #52525B on light, #A1A1AA on dark */
+.fi-header-subheading,
+.fi-section-header-description,
+.fi-ta-text-description,
+.fi-wi-stats-overview-stat-label,
+.fi-empty-state-description,
+.fi-modal-description,
+.fi-breadcrumbs-item-label {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+/* Raised surfaces in dark mode (#27272A): dialogs and menus sit above the page panel */
+.dark .fi-modal-window,
+.dark .fi-dropdown-panel {
+    @apply bg-gray-800 ring-gray-700;
+}
+
+/* Field borders reach 3:1 against the surface so empty fields are findable (WCAG 1.4.11) */
+.fi-input-wrp:not(.fi-invalid):not(.fi-disabled):not(:focus-within) {
+    @apply shadow-none ring-gray-950/45 dark:ring-white/35;
+}
+
+input[type='checkbox'].fi-checkbox-input:not(:checked):not(:disabled) {
+    @apply shadow-none ring-gray-950/45 dark:ring-white/35;
 }
 
 /* Controls: 40px fields and buttons, 8px corners; touch targets stay at 44px on phones */

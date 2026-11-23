@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -101,7 +102,7 @@ class BusinessTypeResource extends Resource
                 TextColumn::make('businesses_count')->label(__('Stores'))->counts('businesses'),
                 IconColumn::make('is_active')->label(__('Active'))->boolean(),
             ])
-            ->recordActions([EditAction::make()]);
+            ->recordActions([EditAction::make()->modalWidth(Width::FiveExtraLarge)]);
     }
 
     public static function getPages(): array

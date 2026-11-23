@@ -12,6 +12,8 @@ use App\Services\PurchaseService;
 use App\Services\RecurringExpenseService;
 use App\Services\ReportService;
 use App\Services\SaleService;
+use App\Services\SystemExpenseRecorder;
+use Illuminate\Support\Carbon;
 
 beforeEach(function (): void {
     PlatformSetting::set('default_tax_rate', 10);
@@ -47,9 +49,9 @@ it('matches a hand-computed net profit (scenario 14)', function (): void {
     app(SaleService::class)->refund($sale, [['sale_item_id' => $sale->items()->first()->id, 'qty' => 1]]);
 
     $category = ExpenseCategory::query()->firstOrCreate(['business_id' => $business->id, 'key' => 'rent'], ['name' => ['en' => 'Rent', 'ar' => 'إيجار']]);
-    Expense::query()->create(['business_id' => $business->id, 'expense_category_id' => $category->id, 'amount_cents' => 3000, 'description' => 'Rent', 'expense_date' => now()->toDateString(), 'source' => ExpenseSource::Manual]);
+    Expense::query()->create(['business_id' => $business->id, 'expense_category_id' => $category->id, 'amount_cents' => 3000, 'description' => 'Rent', 'expense_date' => now($business->timezone)->toDateString(), 'source' => ExpenseSource::Manual]);
 
-    $report = app(ReportService::class)->summary($business, now(), now());
+    $report = app(ReportService::class)->summary($business, now($business->timezone), now($business->timezone));
 
     // revenue 80.00, COGS 48.00, gross 32.00, expenses 30.00 → net 2.00; tax 8.00 kept apart.
     expect($report['revenue_cents'])->toBe(8000)
@@ -59,7 +61,7 @@ it('matches a hand-computed net profit (scenario 14)', function (): void {
         ->and($report['net_profit_cents'])->toBe(200)
         ->and($report['tax_cents'])->toBe(800);
 
-    $tax = app(ReportService::class)->taxReport($business, now(), now());
+    $tax = app(ReportService::class)->taxReport($business, now($business->timezone), now($business->timezone));
     expect($tax->first()['tax_cents'])->toBe(1000)
         ->and($tax->first()['rate'])->toBe(10.0);
 });
@@ -83,4 +85,14 @@ it('creates recurring rent once per period', function (): void {
 
     // The template itself never counts as an expense.
     expect(app(ReportService::class)->summary($business, now()->subMonths(3), now())['expenses_cents'])->toBe(500000);
+});
+
+it('dates system expenses on the store\'s own calendar day, not UTC\'s', function (): void {
+    // 01:00 UTC on the 23rd is still 8 pm on the 22nd in New York.
+    $this->travelTo(Carbon::parse('2026-11-23 01:00:00', 'UTC'));
+    $business = Business::factory()->create(['timezone' => 'America/New_York']);
+
+    $expense = app(SystemExpenseRecorder::class)->record($business->id, 'payment_fees', ExpenseSource::GatewayFee, 150, 'Card fee', $business);
+
+    expect($expense->expense_date->toDateString())->toBe('2026-11-22');
 });

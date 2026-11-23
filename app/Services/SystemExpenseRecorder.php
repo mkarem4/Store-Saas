@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ExpenseSource;
+use App\Models\Business;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,7 +53,8 @@ class SystemExpenseRecorder
             'expense_category_id' => $category->id,
             'amount_cents' => $amountCents,
             'description' => $description,
-            'expense_date' => ($date ?? now())->toDateString(),
+            // The store's own calendar day, not UTC's: an evening sale in New York is still today there.
+            'expense_date' => ($date ?? now(Business::query()->whereKey($businessId)->value('timezone')))->toDateString(),
             'is_recurring' => false,
         ]);
     }

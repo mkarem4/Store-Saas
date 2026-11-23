@@ -2,8 +2,14 @@
 
 namespace App\Filament\Business\Widgets;
 
+use App\Enums\InquiryStatus;
 use App\Enums\OrderStatus;
 use App\Filament\Business\BusinessPanel;
+use App\Filament\Business\Pages\Reports;
+use App\Filament\Business\Resources\Inquiries\InquiryResource;
+use App\Filament\Business\Resources\Orders\OrderResource;
+use App\Filament\Business\Resources\TimeEntries\TimeEntryResource;
+use App\Models\Inquiry;
 use App\Models\Order;
 use App\Models\TimeEntry;
 use App\Services\ReportService;
@@ -25,9 +31,10 @@ class StoreStats extends StatsOverviewWidget
         return BusinessPanel::can(Permission::ViewReports);
     }
 
-    protected function getColumns(): int
+    /** One row on wide screens however many cards this store type shows. */
+    protected function getColumns(): int|array|null
     {
-        return BusinessPanel::isType(['car_showroom', 'car_rental']) ? 3 : (BusinessPanel::isType(['restaurant']) ? 4 : 5);
+        return ['md' => 3, 'xl' => max(3, min(6, count($this->getCachedStats())))];
     }
 
     protected function getStats(): array
@@ -39,22 +46,49 @@ class StoreStats extends StatsOverviewWidget
         $month = $reports->summary($business, $now->copy()->startOfMonth(), $now);
         $currency = $business->currency;
 
-        $stats = [
-            Stat::make(__('Sales today'), Money::format($today['revenue_cents'], $currency))
-                ->description(trans_choice('{0} No sales yet today|{1} 1 sale|[2,*] :count sales', $today['sales_count'], ['count' => $today['sales_count']])),
-            Stat::make(__('Net profit this month'), Money::format($month['net_profit_cents'], $currency))
-                ->color($month['net_profit_cents'] >= 0 ? 'success' : 'danger')
-                ->description(__('Revenue :revenue, expenses :expenses', ['revenue' => Money::format($month['revenue_cents'], $currency), 'expenses' => Money::format($month['expenses_cents'], $currency)])),
-        ];
+        // What needs doing comes first and links straight to it; figures follow.
+        $stats = [];
 
-        if (! BusinessPanel::isType(['car_showroom', 'car_rental'])) {
+        if (! BusinessPanel::isType(['car_showroom', 'car_rental']) && BusinessPanel::can(Permission::ManageOrders)) {
             $pending = Order::query()->where('status', OrderStatus::Pending)->count();
-            $stats[] = Stat::make(__('Orders waiting'), $pending)->color($pending > 0 ? 'warning' : 'gray');
+            $stats[] = Stat::make(__('Orders waiting'), $pending)
+                ->color($pending > 0 ? 'warning' : 'gray')
+                ->description($pending > 0 ? __('Accept or reject') : __('All caught up'))
+                ->url(OrderResource::getUrl());
         }
 
-        if (! BusinessPanel::isType(['car_showroom', 'car_rental', 'restaurant'])) {
-            $stats[] = Stat::make(__('Low stock items'), $reports->lowStock($business)->count())->color('danger');
+        if (BusinessPanel::isType(['car_showroom', 'car_rental']) && BusinessPanel::can(Permission::ManageOrders)) {
+            $newInquiries = Inquiry::query()->where('status', InquiryStatus::New)->count();
+            $stats[] = Stat::make(__('New inquiries'), $newInquiries)
+                ->color($newInquiries > 0 ? 'warning' : 'gray')
+                ->description($newInquiries > 0 ? __('Call them back') : __('All caught up'))
+                ->url(InquiryResource::getUrl());
         }
+
+        if (! BusinessPanel::isType(['car_showroom', 'car_rental', 'restaurant']) && BusinessPanel::can(Permission::ViewReports)) {
+            $low = $reports->lowStock($business)->count();
+            $stats[] = Stat::make(__('Low stock items'), $low)
+                ->color($low > 0 ? 'danger' : 'gray')
+                ->description($low > 0 ? __('See what to reorder') : __('Stock looks fine'))
+                ->url(Reports::getUrl());
+        }
+
+        if (BusinessPanel::can(Permission::ManageAttendance)) {
+            $toReview = TimeEntry::query()->where('is_auto_closed', true)->whereNull('reviewed_at')->count();
+
+            if ($toReview > 0) {
+                $stats[] = Stat::make(__('Shifts to review'), $toReview)
+                    ->color('warning')
+                    ->description(__('Closed automatically, check the hours'))
+                    ->url(TimeEntryResource::getUrl());
+            }
+        }
+
+        $stats[] = Stat::make(__('Sales today'), Money::format($today['revenue_cents'], $currency))
+            ->description(trans_choice('{0} No sales yet today|{1} 1 sale|[2,*] :count sales', $today['sales_count'], ['count' => $today['sales_count']]));
+        $stats[] = Stat::make(__('Net profit this month'), Money::format($month['net_profit_cents'], $currency))
+            ->color($month['net_profit_cents'] >= 0 ? 'success' : 'danger')
+            ->description(__('Revenue :revenue, expenses :expenses', ['revenue' => Money::format($month['revenue_cents'], $currency), 'expenses' => Money::format($month['expenses_cents'], $currency)]));
 
         $clockedIn = TimeEntry::query()->whereNull('clock_out_at')->count();
         $stats[] = Stat::make(__('Clocked in now'), $clockedIn);

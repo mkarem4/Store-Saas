@@ -80,7 +80,7 @@ class ExpenseResource extends BusinessResource
             Select::make('expense_category_id')->label(__('Category'))->options(fn (): array => self::categoryOptions())->required(),
             MoneyInput::make('amount_cents')->label(__('Amount'))->required()->minValue(0.01),
             TextInput::make('description')->label(__('Description'))->required(),
-            DatePicker::make('expense_date')->label(__('Date'))->default(now())->required(),
+            DatePicker::make('expense_date')->label(__('Date'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->toDateString())->required(),
             Toggle::make('is_recurring')->label(__('Repeats automatically'))->live()
                 ->helperText(__('Creates this expense every period from the next due date.')),
             Select::make('recurrence')->label(__('Every'))->options(['weekly' => __('Week'), 'monthly' => __('Month'), 'yearly' => __('Year')])->default('monthly')
@@ -114,7 +114,7 @@ class ExpenseResource extends BusinessResource
                 SelectFilter::make('source')->options(ExpenseSource::class),
                 Filter::make('templates')->label(__('Recurring templates'))->query(fn (Builder $query) => $query->where('is_recurring', true)),
                 Filter::make('period')->schema([
-                    DatePicker::make('from')->label(__('From'))->default(now()->startOfMonth()),
+                    DatePicker::make('from')->label(__('From'))->default(fn (): string => now(BusinessPanel::business()?->timezone)->startOfMonth()->toDateString()),
                     DatePicker::make('until')->label(__('Until')),
                 ])->query(fn (Builder $query, array $data) => $query
                     ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('expense_date', '>=', $date))

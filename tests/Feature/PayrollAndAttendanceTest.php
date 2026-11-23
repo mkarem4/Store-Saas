@@ -205,7 +205,7 @@ it('pays no commission in store types other than car showroom and jewelry', func
         'sold_at' => now()->startOfDay()->setTime(15, 0),
     ]);
 
-    expect(app(PayrollService::class)->commission($employee, now(), now()))->toBe(0);
+    expect(app(PayrollService::class)->commission($employee, now($employee->business->timezone), now($employee->business->timezone)))->toBe(0);
 });
 
 it('blocks approval while auto-closed attendance is unreviewed, and adjusts draft payslips', function (): void {

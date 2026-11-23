@@ -54,9 +54,9 @@ it('sells a car: total cost, profit and the seller commission (scenario 6)', fun
         ->and($sale->cogs_cents)->toBe(1600000)
         ->and($sale->tax_cents)->toBe(0);
 
-    expect(app(PayrollService::class)->commission($seller, now(), now()))->toBe(19000);
+    expect(app(PayrollService::class)->commission($seller, now($business->timezone), now($business->timezone)))->toBe(19000);
 
-    $profits = app(ReportService::class)->vehicleProfits($business, now(), now());
+    $profits = app(ReportService::class)->vehicleProfits($business, now($business->timezone), now($business->timezone));
     expect($profits->first()['profit_cents'])->toBe(300000);
 
     // Rule 3: sold only once.
@@ -81,7 +81,7 @@ it('rents a car paid in full at pickup with the deposit kept out of revenue (sce
 
     expect($vehicle->refresh()->status)->toBe(VehicleStatus::Rented);
 
-    $summary = app(ReportService::class)->summary($business, now(), now());
+    $summary = app(ReportService::class)->summary($business, now($business->timezone), now($business->timezone));
     expect($summary['revenue_cents'])->toBe(15000);
 
     $returned = $service->returnVehicle($contract->refresh(), 42850, extraChargesCents: 7500, extraChargesNote: 'Late return');
@@ -92,7 +92,7 @@ it('rents a car paid in full at pickup with the deposit kept out of revenue (sce
         ->and($vehicle->mileage)->toBe(42850);
 
     // Revenue = rent + extra charges; the deposit never counts.
-    expect(app(ReportService::class)->summary($business, now(), now())['revenue_cents'])->toBe(22500)
+    expect(app(ReportService::class)->summary($business, now($business->timezone), now($business->timezone))['revenue_cents'])->toBe(22500)
         ->and(Sale::query()->where('business_id', $business->id)->where('channel', SaleChannel::Rental)->count())->toBe(2);
 });
 

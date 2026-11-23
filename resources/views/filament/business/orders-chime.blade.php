@@ -2,9 +2,13 @@
     <x-filament-panels::header :heading="$this->getHeading()" :actions="$this->getCachedHeaderActions()" />
     <div wire:poll.10s="checkForNewOrders"
          x-data="{
+            ctx: null,
+            destroy() { this.ctx?.close() },
             chime() {
                 try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    // One audio context per page; browsers cap how many can be open.
+                    this.ctx ??= new (window.AudioContext || window.webkitAudioContext)();
+                    const ctx = this.ctx;
                     [880, 1175, 880].forEach((freq, i) => {
                         const osc = ctx.createOscillator();
                         const gain = ctx.createGain();

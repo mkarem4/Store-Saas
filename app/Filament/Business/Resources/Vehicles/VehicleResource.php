@@ -17,11 +17,13 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -94,6 +96,10 @@ class VehicleResource extends BusinessResource
                 MoneyInput::make('purchase_price_cents')->label(__('Purchase price'))->required(),
                 MoneyInput::make('listing_price_cents')->label(__('Listing price'))->required(),
             ]),
+            Section::make(__('Photos'))->columnSpan(2)->schema([
+                SpatieMediaLibraryFileUpload::make('photos')->hiddenLabel()->collection('photos')->multiple()->reorderable()->image()->maxFiles(12)
+                    ->helperText(__('The first photo is shown in the list.')),
+            ]),
         ]);
     }
 
@@ -106,6 +112,7 @@ class VehicleResource extends BusinessResource
             ->modifyQueryUsing(fn (Builder $query) => $query->where('purpose', self::purpose())->withSum('costs', 'amount_cents'))
             ->defaultSort('created_at', 'desc')
             ->columns([
+                SpatieMediaLibraryImageColumn::make('photos')->collection('photos')->limit(1)->label('')->square(),
                 TextColumn::make('name')->label(__('Vehicle'))->state(fn (Vehicle $record): string => $record->displayName())
                     ->description(fn (Vehicle $record): string => $record->vin)
                     ->searchable(query: fn (Builder $query, string $search) => $query->where(fn (Builder $q) => $q->where('vin', 'like', "%{$search}%")->orWhere('make', 'like', "%{$search}%")->orWhere('model', 'like', "%{$search}%")->orWhere('plate_number', 'like', "%{$search}%"))),
@@ -120,7 +127,7 @@ class VehicleResource extends BusinessResource
                     ->state(fn (Vehicle $record): ?int => $record->sold_price_cents === null ? null : (int) $record->sold_price_cents - (int) $record->purchase_price_cents - (int) $record->costs_sum_amount_cents)
                     ->money($currency, divideBy: 100)->placeholder('—')
                     ->color(fn (?int $state): ?string => $state === null ? null : ($state >= 0 ? 'success' : 'danger')),
-                TextColumn::make('attributes.daily_rate_cents')->label(__('Daily rate'))->visible($isRental)->money($currency, divideBy: 100),
+                TextColumn::make('attributes.daily_rate_cents')->label(__('Daily rate'))->visible($isRental)->money($currency, divideBy: 100)->placeholder('—'),
                 TextColumn::make('status')->label(__('Status'))->badge(),
             ])
             ->filters([SelectFilter::make('status')->options(VehicleStatus::class)])
