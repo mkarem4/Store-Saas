@@ -25,8 +25,9 @@ class BusinessProvisioner
         string $ownerName,
         string $ownerEmail,
         string $ownerPassword,
+        string $ownerLocale = 'en',
     ): Business {
-        return DB::transaction(function () use ($type, $attributes, $ownerName, $ownerEmail, $ownerPassword): Business {
+        return DB::transaction(function () use ($type, $attributes, $ownerName, $ownerEmail, $ownerPassword, $ownerLocale): Business {
             $name = $attributes['name'];
 
             $business = Business::query()->create([
@@ -55,7 +56,7 @@ class BusinessProvisioner
                 'email' => $ownerEmail,
                 'password' => $ownerPassword,
                 'role' => UserRole::BusinessOwner,
-                'locale' => 'en',
+                'locale' => $ownerLocale,
                 'is_active' => true,
             ]);
 

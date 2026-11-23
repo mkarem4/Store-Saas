@@ -7,6 +7,7 @@ use App\Filament\Business\Pages\PointOfSale;
 use App\Filament\Business\Pages\StoreSettings;
 use App\Filament\Business\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Business\Resources\Employees\Pages\CreateEmployee;
+use App\Filament\Business\Resources\Employees\Pages\ListEmployees;
 use App\Filament\Business\Resources\Orders\Pages\ListOrders;
 use App\Filament\Business\Resources\Products\Pages\CreateProduct;
 use App\Filament\Business\Resources\Products\Pages\ListProducts;
@@ -26,10 +27,12 @@ use App\Models\User;
 use App\Services\BusinessProvisioner;
 use App\Services\EmployeeService;
 use App\Services\OrderService;
+use App\Support\Permission;
 use Database\Seeders\BusinessTypeSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 /**
  * @return array{0: Business, 1: User}
@@ -196,6 +199,55 @@ it('creates an employee with a staff sign-in', function (): void {
         ->and($employee->commission_rate_bps)->toBe(250)
         ->and($employee->user->role)->toBe(UserRole::Staff)
         ->and($employee->user->business_id)->toBe($business->id);
+});
+
+it('creates, edits and retains a tenant staff role when the sign-in is reset', function (): void {
+    [$business] = storeOwner('jewelry');
+    $employees = app(EmployeeService::class);
+    $employee = $employees->createWithLogin(
+        $business,
+        ['name' => 'Rana', 'pay_type' => 'monthly', 'monthly_salary_cents' => 250000, 'is_active' => true],
+        'rana@shop.test',
+        'TempPass1',
+    );
+    $staffRole = TestAction::make('staffRole')->table($employee);
+
+    Livewire::test(ListEmployees::class)
+        ->mountAction($staffRole)
+        ->callAction(TestAction::make('createOption')->schemaComponent('role_id'), data: [
+            'name' => 'Cashier',
+            'permissions' => [Permission::UsePos],
+        ])
+        ->assertHasNoActionErrors()
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    $role = Role::query()->where('business_id', $business->id)->where('name', 'Cashier')->sole();
+    expect($employee->user->fresh()->hasRole($role))->toBeTrue()
+        ->and($employee->user->fresh()->can(Permission::UsePos))->toBeTrue();
+
+    Livewire::test(ListEmployees::class)
+        ->mountAction($staffRole)
+        ->callAction(TestAction::make('editOption')->schemaComponent('role_id'), data: [
+            'permissions' => [Permission::ClockAttendance],
+        ])
+        ->assertHasNoActionErrors();
+
+    $user = $employees->grantLogin($employee, 'rana@shop.test', 'TempPass2')->fresh();
+    expect($user->hasRole($role))->toBeTrue()
+        ->and($user->can(Permission::UsePos))->toBeFalse()
+        ->and($user->can(Permission::ClockAttendance))->toBeTrue();
+
+    $otherBusiness = app(BusinessProvisioner::class)->provision(
+        $business->businessType, ['name' => ['en' => 'Other shop']], 'Other owner', 'other@shop.test', 'password',
+    );
+    $foreignRole = Role::query()->where('business_id', $otherBusiness->id)->where('name', 'staff')->sole();
+
+    Livewire::test(ListEmployees::class)
+        ->callAction($staffRole, data: ['role_id' => $foreignRole->id])
+        ->assertHasActionErrors(['role_id']);
+
+    expect($user->fresh()->hasRole($role))->toBeTrue();
 });
 
 it('saves store settings', function (): void {

@@ -4,14 +4,20 @@ namespace App\Models;
 
 use App\Enums\PayType;
 use App\Models\Concerns\BelongsToBusiness;
+use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property PayType $pay_type
+ */
 class Employee extends Model
 {
     use BelongsToBusiness;
+
+    /** @use HasFactory<EmployeeFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -39,21 +45,27 @@ class Employee extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<TimeEntry, $this> */
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
     }
 
+    /** @return HasMany<Sale, $this> */
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
     }
 
+    /** @return HasMany<Payslip, $this> */
     public function payslips(): HasMany
     {
         return $this->hasMany(Payslip::class);

@@ -15,6 +15,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -29,7 +30,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 use UnitEnum;
 
 /**
@@ -48,7 +53,7 @@ class EmployeeResource extends BusinessResource
 
     public static function getNavigationGroup(): string|UnitEnum|null
     {
-        return __(static::$navigationGroup);
+        return __('Team');
     }
 
     protected static ?int $navigationSort = 1;
@@ -126,9 +131,64 @@ class EmployeeResource extends BusinessResource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    Action::make('staffRole')->label(__('Staff role'))
+                        ->icon(Heroicon::OutlinedShieldCheck)
+                        ->authorize(fn (Employee $record): bool => self::canManageStaffRole($record))
+                        ->fillForm(fn (Employee $record): array => ['role_id' => $record->user?->roles()->first()?->getKey()])
+                        ->schema(fn (Employee $record): array => [
+                            Select::make('role_id')->label(__('Staff role'))->required()
+                                ->options(fn (): array => self::staffRoles($record)
+                                    ->orderBy('name')->pluck('name', 'id')->all())
+                                ->createOptionForm([
+                                    TextInput::make('name')->label(__('Role name'))->required()->maxLength(100)
+                                        ->rules([
+                                            'not_in:business_owner,staff',
+                                            fn () => Rule::unique('roles', 'name')->where('business_id', $record->business_id)->where('guard_name', 'web'),
+                                        ]),
+                                    self::staffPermissionsField(),
+                                ])
+                                ->createOptionUsing(function (array $data) use ($record): int {
+                                    abort_unless(self::canManageStaffRole($record), 403);
+
+                                    return DB::transaction(function () use ($data, $record): int {
+                                        $role = Role::query()->create([
+                                            'name' => $data['name'],
+                                            'guard_name' => 'web',
+                                            'business_id' => $record->business_id,
+                                        ]);
+                                        $role->syncPermissions($data['permissions'] ?? []);
+
+                                        return $role->getKey();
+                                    });
+                                })
+                                ->editOptionForm([self::staffPermissionsField()])
+                                ->fillEditOptionActionFormUsing(function (Select $component) use ($record): array {
+                                    abort_unless(self::canManageStaffRole($record), 403);
+
+                                    $role = self::staffRoles($record)->findOrFail((int) $component->getState());
+
+                                    return ['permissions' => $role->permissions()->whereIn('name', array_keys(self::staffPermissions()))->pluck('name')->all()];
+                                })
+                                ->updateOptionUsing(function (array $data, Select $component) use ($record): void {
+                                    abort_unless(self::canManageStaffRole($record), 403);
+
+                                    $role = self::staffRoles($record)->findOrFail((int) $component->getState());
+                                    DB::transaction(function () use ($role, $data): void {
+                                        $otherPermissions = $role->permissions()->whereNotIn('name', array_keys(self::staffPermissions()))->pluck('name')->all();
+                                        $role->syncPermissions([...$otherPermissions, ...($data['permissions'] ?? [])]);
+                                    });
+                                }),
+                        ])
+                        ->action(function (Employee $record, array $data): void {
+                            abort_unless(self::canManageStaffRole($record), 403);
+
+                            $role = self::staffRoles($record)->findOrFail((int) $data['role_id']);
+
+                            DB::transaction(fn () => $record->user?->syncRoles([$role]));
+                        }),
                     Action::make('login')->label(fn (Employee $record): string => $record->user ? __('Reset sign-in') : __('Give sign-in'))
                         ->icon(Heroicon::OutlinedKey)
-                        ->fillForm(fn (Employee $record): array => ['email' => $record->user?->email ?? $record->email, 'password' => Str::password(10, symbols: false)])
+                        ->fillForm(fn (Employee $record): array => ['email' => $record->user->email ?? $record->email, 'password' => Str::password(10, symbols: false)])
                         ->schema(fn (Employee $record): array => [
                             TextInput::make('email')->label(__('Email'))->email()->required()->unique(User::class, 'email', ignorable: $record->user),
                             TextInput::make('password')->label(__('Temporary password'))->required()->minLength(8),
@@ -144,6 +204,46 @@ class EmployeeResource extends BusinessResource
                         ->action(fn (Employee $record) => app(EmployeeService::class)->setActive($record, ! $record->is_active)),
                 ]),
             ]);
+    }
+
+    private static function canManageStaffRole(Employee $record): bool
+    {
+        $owner = auth()->user();
+        $user = $record->user;
+
+        return $owner instanceof User && $owner->isBusinessOwner()
+            && $owner->business_id === $record->business_id
+            && $user instanceof User && $user->isStaff()
+            && $user->business_id === $record->business_id
+            && BusinessPanel::business()?->id === $record->business_id;
+    }
+
+    /**
+     * @return Builder<Role>
+     */
+    private static function staffRoles(Employee $employee): Builder
+    {
+        return Role::query()->where('business_id', $employee->business_id)
+            ->where('guard_name', 'web')->where('name', '!=', 'business_owner');
+    }
+
+    private static function staffPermissionsField(): CheckboxList
+    {
+        return CheckboxList::make('permissions')->label(__('Permissions'))
+            ->options(self::staffPermissions(...));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function staffPermissions(): array
+    {
+        return [
+            Permission::UsePos => __('Point of sale'),
+            Permission::ClockAttendance => __('Time clock'),
+            Permission::SellVehicles => __('Sell vehicles'),
+            Permission::SellWholesale => __('Sell at wholesale prices'),
+        ];
     }
 
     public static function getPages(): array

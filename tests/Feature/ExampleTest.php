@@ -1,7 +1,7 @@
 <?php
 
 test('returns a successful response', function () {
-    $response = $this->get('/');
+    $response = $this->withoutVite()->get('/');
 
     $response->assertOk();
 });

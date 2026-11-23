@@ -59,7 +59,9 @@ class EmployeeService
             $registrar->setPermissionsTeamId($employee->business_id);
 
             try {
-                $user->syncRoles([Role::findOrCreate('staff', 'web')]);
+                if ($user->roles()->doesntExist()) {
+                    $user->assignRole(Role::findOrCreate('staff', 'web'));
+                }
             } finally {
                 $registrar->setPermissionsTeamId($previous);
             }
